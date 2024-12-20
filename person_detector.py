@@ -9,7 +9,8 @@ from tqdm import tqdm
 
 class PersonDetector():
     def __init__(self, dtype=torch.FloatTensor):
-        self.detection_model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=True)
+        self.detection_model = torchvision.models.detection.fasterrcnn_resnet50_fpn(
+            weights=torchvision.models.detection.FasterRCNN_ResNet50_FPN_Weights.DEFAULT)
         self.detection_model = self.detection_model.to(dtype)
         self.detection_model.eval()
         self.dtype = dtype
@@ -79,6 +80,7 @@ class PersonDetector():
         persons_top = []
         persons_bottom = []
         min_len = min(len(frames), len(matrix_all))
+        print("track players processing")
         for num_frame in tqdm(range(min_len)):
             img = frames[num_frame]
             if matrix_all[num_frame] is not None:
