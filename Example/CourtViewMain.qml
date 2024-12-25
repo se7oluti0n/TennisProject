@@ -24,6 +24,32 @@ Window {
           id: courtView
           width: 600 
           height: 300 
+
+          MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.LeftButton | Qt.RightButton
+            onClicked: function(mouse) {
+              if (mouse.button === Qt.RightButton) 
+              {
+                console.log("Right-click detected at", mouse.x, mouse.y);
+                courtView.handleRightClicked(mouse.x, mouse.y)
+              }
+            }
+
+            onPressed: function(mouse) {
+              if (mouse.button === Qt.LeftButton) {
+               courtView.handleMousePressed(mouse.x, mouse.y)
+              }
+            }
+
+            onReleased: function(mouse) {
+              courtView.handleMouseReleased(mouse.x, mouse.y)
+            }
+
+            onPositionChanged: function(mouse) {
+              courtView.handleMouseMoved(mouse.x, mouse.y)
+            }
+          }
         }
 
         RowLayout {
@@ -33,7 +59,10 @@ Window {
 
             Text {
               id: video_path
-              text: "Hello World"
+              text: settings.videoPath != "" ? settings.videoPath : "No Video Selected" 
+              onTextChanged: {
+                settings.videoPath = video_path.text
+              }
             }
 
             Button {
@@ -42,6 +71,7 @@ Window {
                    fileDialog.open() 
                 }
             }
+
         }
 
         RowLayout {
@@ -77,6 +107,13 @@ Window {
 
                 enabled: courtVideo.checkNext
             }
+
+            Button {
+                text: "Realign Court"
+                onClicked: {
+                  courtView.update_homography()
+                }
+            }
         }
 
     }
@@ -91,17 +128,27 @@ Window {
       id: courtVideo
 
       onPrevAvailable: function(val) {
-        prevButton.visible = val 
+        console.log("Prev Available: " + val)
+        prevButton.enabled = val 
       }
 
       onNextAvailable: function(val) {
-        nextButton.visible = val
+        nextButton.enabled = val
       }
 
       onGotImage: function(image) {
         courtView.setImage(image)
       }
 
+    }
+
+    Settings {
+      id: settings
+      property alias videoPath: video_path.text
+    }
+
+    Component.onDestruction : {
+      settings.videoPath = video_path.text
     }
 
 }

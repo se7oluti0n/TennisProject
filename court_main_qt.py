@@ -26,6 +26,9 @@ if __name__ == "__main__":
         QQmlDebuggingEnabler.enableDebugging(True)
 
     app = QGuiApplication(sys.argv)
+    app.setOrganizationName("Manhattan")
+    app.setOrganizationDomain("manhattan.vn")
+    app.setApplicationName("CourtView")
 
     #qmlRegisterType(CourtSetupView, "CourtSetupView", 1, 0, "CourtSetupView")
     #qmlRegisterType(CourtVideo, "CourtVideo", 1, 0, "CourtVideo")

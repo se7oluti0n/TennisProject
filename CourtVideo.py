@@ -38,25 +38,23 @@ class CourtVideo(QObject):
 
     @Slot(str, result=None)
     def read_video(self, path: str):
-        cap = cv2.VideoCapture(path)
-        self.fps = cap.get(cv2.CAP_PROP_FPS)
+        self.cap = cv2.VideoCapture(path)
+        self.fps = self.cap.get(cv2.CAP_PROP_FPS)
         self.frames = []
-        while True:
-            ret, frame = cap.read()
-            if not ret:
-                break
-            self.frames.append(frame)
+        self.get_next_frame()
 
-        print(f"Read {len(self.frames)} frames")
-
-        if len(self.frames) > 0:
-            self.nextAvailable.emit(True)
 
     @Slot()
     def get_next_frame(self):
+        ret, frame = self.cap.read()
+        if ret:
+            self.frames.append(frame)
+        if len(self.frames) > 0:
+            self.nextAvailable.emit(True)
         if self.current_frame == len(self.frames) - 1:
             return None
         self.current_frame += 1
+        self.prevAvailable.emit(True)
         image =  cv_to_qimage(self.frames[self.current_frame])
         print(f"Frame {self.current_frame}")
         self.gotImage.emit(image)
