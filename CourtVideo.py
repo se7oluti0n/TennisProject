@@ -1,0 +1,73 @@
+import cv2
+from PySide6.QtCore import QObject, Signal, Slot, Property
+from PySide6.QtGui import QImage
+from PySide6.QtQml import QmlElement
+
+def cv_to_qimage(cv_img):
+    """Convert OpenCV image to QImage."""
+    height, width, channel = cv_img.shape
+    bytes_per_line = channel * width
+    # Convert BGR to RGB
+    cv_img_rgb = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
+    qimg = QImage(cv_img_rgb.data, width, height, bytes_per_line, QImage.Format_RGB888)
+    return qimg
+
+QML_IMPORT_NAME = "CourtVideo"
+QML_IMPORT_MAJOR_VERSION = 1
+QML_IMPORT_MINOR_VERSION = 0  # Optional
+
+@QmlElement
+class CourtVideo(QObject):
+
+    gotImage = Signal(QImage)
+    prevAvailable = Signal(bool)
+    nextAvailable = Signal(bool)
+
+    def __init__(self):
+        super().__init__()
+        self.current_frame = -1
+        self.frames = []
+
+    @Property(bool, notify=prevAvailable)
+    def checkPrev(self):
+        return self.current_frame > 0
+
+    @Property(int, notify=nextAvailable)
+    def checkNext(self):
+        return self.current_frame < len(self.frames) - 1
+
+    @Slot(str, result=None)
+    def read_video(self, path: str):
+        cap = cv2.VideoCapture(path)
+        self.fps = cap.get(cv2.CAP_PROP_FPS)
+        self.frames = []
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                break
+            self.frames.append(frame)
+
+        print(f"Read {len(self.frames)} frames")
+
+        if len(self.frames) > 0:
+            self.nextAvailable.emit(True)
+
+    @Slot()
+    def get_next_frame(self):
+        if self.current_frame == len(self.frames) - 1:
+            return None
+        self.current_frame += 1
+        image =  cv_to_qimage(self.frames[self.current_frame])
+        print(f"Frame {self.current_frame}")
+        self.gotImage.emit(image)
+
+    @Slot()
+    def get_prev_frame(self):
+        if self.current_frame == 0 or len(self.frames) == 0:
+            return None
+        self.current_frame -= 1
+        image = cv_to_qimage(self.frames[self.current_frame])
+        print(f"Frame {self.current_frame}")
+
+        self.gotImage.emit(image)
+
