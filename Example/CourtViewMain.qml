@@ -11,16 +11,18 @@ import CourtVideo
 
 Window {
     id: window
-    width: 600
-    height: 400
+    width: settings.windowWidth
+    height: settings.windowHeight
     visible: true
     title: "Hello World"
 
     onWidthChanged: {
+      settings.windowWidth = window.width
       courtView.handleResize()
     }
 
     onHeightChanged: {
+      settings.windowHeight = window.height
       courtView.handleResize()
     }
 
@@ -70,7 +72,7 @@ Window {
 
             Text {
               id: video_path
-              text: settings.videoPath != "" ? settings.videoPath : "No Video Selected" 
+              text: settings.videoPath  
               onTextChanged: {
                 settings.videoPath = video_path.text
               }
@@ -156,7 +158,9 @@ Window {
 
     Settings {
       id: settings
-      property alias videoPath: video_path.text
+      property string videoPath: "No Video Selected" 
+      property int windowWidth: 640 
+      property int windowHeight: 400
     }
 
     Component.onDestruction : {
