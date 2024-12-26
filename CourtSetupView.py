@@ -92,11 +92,11 @@ class CourtSetupView(QQuickPaintedItem):
             point2 = self._draw_court[key][1]
 
             if np.linalg.norm(np.array(point1) - np.array([mouse_x, mouse_y])) < 5:
-                print(f"Selected {key} point 1")
+                print(f"Update homography: Selected {key} point 1")
                 self._points_for_update_homography.add(key + "-0") 
                 break
             elif np.linalg.norm(np.array(point2) - np.array([mouse_x, mouse_y])) < 5:
-                print(f"Selected {key} point 2")
+                print(f"Update homography: Selected {key} point 1")
                 self._points_for_update_homography.add(key + "-1")
                 break
 
@@ -175,6 +175,7 @@ class CourtSetupView(QQuickPaintedItem):
             painter.setBrush(QColor(255, 0, 0))
             pen = QPen(QColor(255, 0, 255), 2)  # Blue border with width 4
             painter.setPen(pen)
+            painter.drawEllipse(self._draw_court[key][point][0] - 5, self._draw_court[key][point][1] - 5, 10, 10)
             
             
 
