@@ -10,20 +10,31 @@ import CourtSetupView
 import CourtVideo
 
 Window {
+    id: window
     width: 600
     height: 400
     visible: true
     title: "Hello World"
 
+    onWidthChanged: {
+      courtView.handleResize()
+    }
+
+    onHeightChanged: {
+      courtView.handleResize()
+    }
+
     ColumnLayout {
         spacing: 10
+        //Layout.preferredWidth : parent.width
+        //Layout.preferredHeight: parent.height
         Layout.fillWidth: true
         Layout.fillHeight: true
 
         CourtSetupView {
           id: courtView
-          width: 600 
-          height: 300 
+          implicitWidth: window.width 
+          implicitHeight: window.height - 100 //height: window.height - 100 
 
           MouseArea {
             anchors.fill: parent
@@ -54,8 +65,8 @@ Window {
 
         RowLayout {
             spacing: 10
-            width: parent.width
-            height: 50
+            Layout.fillWidth: true
+            Layout.preferredHeight: 40
 
             Text {
               id: video_path
@@ -76,8 +87,9 @@ Window {
 
         RowLayout {
             spacing: 10
-            width: parent.width
-            height: 50
+            Layout.fillWidth: true
+            Layout.preferredHeight: 40
+            Layout.bottomMargin: 5
 
             Button {
                 id: loadButton

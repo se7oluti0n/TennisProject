@@ -53,11 +53,19 @@ class CourtSetupView(QQuickPaintedItem):
             self._draw_court[key] = np.int32(cv2.perspectiveTransform(in_point, self._ref2img_homography).reshape(-1, 2))
 
 
+    @Slot()
+    def handleResize(self):
+#        print(f"Handle resize {self.width()}, {self.height()}")
+        if not self._pixmap:
+            return
+        self._pixmap = QPixmap.fromImage(self._current_image.scaled(int(self.width()), int(self.height())))
+        self.update()
 
     @Slot(QImage, result=None)
     def setImage(self, image: QImage):
         if not image:
             return
+        self._current_image = image
         self._pixmap = QPixmap.fromImage(
             image.scaled(int(self.width()), int(self.height())))
         self.update()
