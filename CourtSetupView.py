@@ -1,4 +1,3 @@
-
 from PySide6.QtGui import QPainter, QBrush, QColor, QImage, QPixmap, QPen, QMouseEvent
 from PySide6.QtQml import QmlElement
 from PySide6.QtCore import Signal, Slot
@@ -6,7 +5,6 @@ from PySide6.QtQuick import QQuickPaintedItem
 
 import numpy as np
 import cv2
-
 
 QML_IMPORT_NAME = "CourtSetupView"
 QML_IMPORT_MAJOR_VERSION = 1
@@ -38,8 +36,8 @@ class CourtSetupView(QQuickPaintedItem):
         self._img2ref_homography = np.matrix(np.eye(3))
         self.find_initial_homography()
 
-        # print courtsetjupview size
-        print(f"courtsetupview size: {self.width()}, {self.height()}")
+       
+
 
     def find_initial_homography(self):
         dstPoints = np.array([*self._draw_court["baseline_top"], *self._draw_court["baseline_bottom"]], dtype=np.float32)
@@ -55,7 +53,6 @@ class CourtSetupView(QQuickPaintedItem):
 
     @Slot()
     def handleResize(self):
-#        print(f"Handle resize {self.width()}, {self.height()}")
         if not self._pixmap:
             return
         self._pixmap = QPixmap.fromImage(self._current_image.scaled(int(self.width()), int(self.height())))
@@ -177,7 +174,3 @@ class CourtSetupView(QQuickPaintedItem):
             painter.setPen(pen)
             painter.drawEllipse(self._draw_court[key][point][0] - 5, self._draw_court[key][point][1] - 5, 10, 10)
             
-            
-
-
-

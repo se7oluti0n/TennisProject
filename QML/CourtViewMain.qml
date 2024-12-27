@@ -6,6 +6,7 @@ import QtCore
 import QtQuick.Controls
 import QtQuick.Dialogs
 import QtQuick.Layouts
+import QtQuick.Controls.Material
 import CourtSetupView
 import CourtVideo
 
@@ -15,6 +16,8 @@ Window {
     height: settings.windowHeight
     visible: true
     title: "Hello World"
+    Material.theme: Material.Dark
+    Material.accent: Material.Red
 
     onWidthChanged: {
       settings.windowWidth = window.width
@@ -126,6 +129,11 @@ Window {
                 text: "Realign Court"
                 onClicked: {
                   courtView.update_homography()
+                }
+            }
+            Button {
+                text: "Process frame"
+                onClicked: {
                 }
             }
         }

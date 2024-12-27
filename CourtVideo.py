@@ -9,7 +9,7 @@ def cv_to_qimage(cv_img):
     bytes_per_line = channel * width
     # Convert BGR to RGB
     cv_img_rgb = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
-    qimg = QImage(cv_img_rgb.data, width, height, bytes_per_line, QImage.Format_RGB888)
+    qimg = QImage(cv_img_rgb.data, width, height, bytes_per_line, QImage.Format.Format_RGB888)
     return qimg
 
 QML_IMPORT_NAME = "CourtVideo"
@@ -22,6 +22,7 @@ class CourtVideo(QObject):
     gotImage = Signal(QImage)
     prevAvailable = Signal(bool)
     nextAvailable = Signal(bool)
+    ballDetected = Signal(int, int)
 
     def __init__(self):
         super().__init__()
@@ -42,7 +43,6 @@ class CourtVideo(QObject):
         self.fps = self.cap.get(cv2.CAP_PROP_FPS)
         self.frames = []
         self.get_next_frame()
-
 
     @Slot()
     def get_next_frame(self):
