@@ -131,9 +131,11 @@ Window {
                   courtView.update_homography()
                 }
             }
+
             Button {
                 text: "Process frame"
                 onClicked: {
+                  pickle_vision.process_frame()
                 }
             }
         }
@@ -158,8 +160,12 @@ Window {
         nextButton.enabled = val
       }
 
-      onGotImage: function(image) {
-        courtView.setImage(image)
+      onGotImage: function(frame_id, image) {
+        courtView.setImage(frame_id, image)
+      }
+
+      onBallDetected: function(frame_id, x, y) {
+        courtView.handleBallDetected(frame_id, x, y)
       }
 
     }

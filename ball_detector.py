@@ -44,7 +44,7 @@ class BallDetector:
         prev_pred = [None, None]
         print("Ball detector processing")
         scale = []
-        for num in tqdm(range(2, len(frames))):
+        for num in range(2, len(frames)):
             img = cv2.resize(frames[num], (self.width, self.height))
             if not scale:
                 scale.append(frames[num].shape[1] / self.width)

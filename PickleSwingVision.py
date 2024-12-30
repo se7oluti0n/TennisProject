@@ -10,8 +10,8 @@ class PickleSwingVision:
         self.match_points = None
         print('ball detection')
 
-        self.ball_detector = BallDetector(args.path_ball_track_model, device)
-        self.bounce_detector = BounceDetector(args.path_bounce_model)
+        self.ball_detector = BallDetector(args[ "path_ball_track_model" ], device)
+        self.bounce_detector = BounceDetector(args[ "path_bounce_model" ])
         self._ball_trajectory = {} 
 
     def get_ball_trajectory(self):

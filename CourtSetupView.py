@@ -35,9 +35,8 @@ class CourtSetupView(QQuickPaintedItem):
         self._points_for_update_homography = set()
         self._img2ref_homography = np.matrix(np.eye(3))
         self.find_initial_homography()
-
-       
-
+        self._current_frame_id = -1
+        self.ball_xy = None
 
     def find_initial_homography(self):
         dstPoints = np.array([*self._draw_court["baseline_top"], *self._draw_court["baseline_bottom"]], dtype=np.float32)
@@ -58,11 +57,14 @@ class CourtSetupView(QQuickPaintedItem):
         self._pixmap = QPixmap.fromImage(self._current_image.scaled(int(self.width()), int(self.height())))
         self.update()
 
-    @Slot(QImage, result=None)
-    def setImage(self, image: QImage):
+    @Slot(int, QImage, result=None)
+    def setImage(self, frame_id:int, image: QImage):
         if not image:
             return
         self._current_image = image
+        self._current_frame_id = frame_id
+        self.scale_x = self.width() * 1.0 / image.width()
+        self.scale_y = self.height() * 1.0 / image.height()
         self._pixmap = QPixmap.fromImage(
             image.scaled(int(self.width()), int(self.height())))
         self.update()
@@ -137,6 +139,13 @@ class CourtSetupView(QQuickPaintedItem):
 
             self.update()
 
+    @Slot(int, int, int)
+    def handleBallDetected(self, frame_id, x, y):
+        print("handleBallDetected", frame_id, x, y)
+        self.ball_xy = (int(self.scale_x * x), int(self.scale_y * y)) # (x, y)
+        self.update()
+
+
     def paint(self, painter: QPainter):
         
         # draw the court lines
@@ -174,3 +183,12 @@ class CourtSetupView(QQuickPaintedItem):
             painter.setPen(pen)
             painter.drawEllipse(self._draw_court[key][point][0] - 5, self._draw_court[key][point][1] - 5, 10, 10)
             
+        if self.ball_xy: 
+            # ball_xy = self.ball_xy[self._current_frame_id]
+            print("ball_xy", self.ball_xy)
+            pen = QPen(QColor(255, 0, 0), 2)  # Blue border with width 4
+            painter.setPen(pen)
+            painter.drawEllipse(self.ball_xy[0] - 5, self.ball_xy[1] - 5, 10, 10)
+        else:
+            print("no ball xy for frame", self._current_frame_id, self.ball_xy)
+
