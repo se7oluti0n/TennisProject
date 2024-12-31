@@ -3,6 +3,7 @@ from PySide6.QtCore import QObject, Signal, Slot, Property
 from PySide6.QtGui import QImage
 from PySide6.QtQml import QmlElement
 from PickleSwingVision import PickleSwingVision
+import TrajectoryPlot
 
 def cv_to_qimage(cv_img):
     """Convert OpenCV image to QImage."""
@@ -30,6 +31,7 @@ class CourtVideo(QObject):
         self.current_frame = -1
         self.frames = []
         self.pickle_vision = PickleSwingVision({"path_ball_track_model": "models/model_tracknet.pt", "path_bounce_model": "models/ctb_regr_bounce.cbm"}, "cuda")
+        self.ball_trajectory = []
         print("Load pickle vison Done!!!!1")
 
     @Property(bool, notify=prevAvailable)
@@ -53,6 +55,20 @@ class CourtVideo(QObject):
             return
         process_frames = self.frames[self.current_frame - 2 : self.current_frame + 1]
         ball_track = self.pickle_vision.track_ball(process_frames, self.current_frame)
+
+        # unzip ball_track to x track and y track
+        x_track = [x[0] for x in ball_track]
+        y_track = [x[1] for x in ball_track]
+
+        # plot ball track
+        x_plot = TrajectoryPlot.matplotlib_figure_to_qimage(x_track)
+        y_plot = TrajectoryPlot.matplotlib_figure_to_qimage(y_track)
+    
+        if not self.ball_trajectory:
+            self.ball_trajectory = ball_track
+        else:
+            self.ball_trajectory.append(ball_track[-1])
+
         # emit to visualize on CourtView
         if len(ball_track) > 0 and ball_track[-1][0] is not None and ball_track[-1][1] is not None:
             print("Ball track: ", ball_track)
