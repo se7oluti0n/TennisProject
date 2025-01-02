@@ -15,6 +15,7 @@ from PySide6.QtQuickControls2 import QQuickStyle
 
 import CourtSetupView
 import CourtVideo
+import PlotView
 import rc_style
 
 if __name__ == "__main__":

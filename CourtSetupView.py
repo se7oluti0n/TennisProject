@@ -185,7 +185,7 @@ class CourtSetupView(QQuickPaintedItem):
             
         if self.ball_xy: 
             # ball_xy = self.ball_xy[self._current_frame_id]
-            print("ball_xy", self.ball_xy)
+            # print("ball_xy", self.ball_xy)
             pen = QPen(QColor(255, 0, 0), 2)  # Blue border with width 4
             painter.setPen(pen)
             painter.drawEllipse(self.ball_xy[0] - 5, self.ball_xy[1] - 5, 10, 10)

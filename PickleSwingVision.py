@@ -36,3 +36,10 @@ class PickleSwingVision:
         return bounces
 
 
+    def smooth_ball_track(self, ball_track):
+        x_ball = [x[0] for x in ball_track]
+        y_ball = [x[1] for x in ball_track]
+        x_ball, y_ball = self.bounce_detector.smooth_predictions(x_ball, y_ball)
+        return x_ball, y_ball
+
+

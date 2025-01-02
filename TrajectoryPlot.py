@@ -10,7 +10,7 @@ def matplotlib_figure_to_qimage(y_data, label="", title="", figsize=(5, 4), dpi=
     canvas = FigureCanvas(fig)
     ax = fig.add_subplot(111)
     x_data = np.asarray(range(len(y_data)))
-    ax.plot(x_data, y_data, label=label)
+    ax.plot(x_data, np.asarray(y_data), label=label)
     ax.set_title(title)
     ax.legend()
     ax.grid()

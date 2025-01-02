@@ -9,6 +9,7 @@ import QtQuick.Layouts
 import QtQuick.Controls.Material
 import CourtSetupView
 import CourtVideo
+import PlotView
 
 Window {
     id: window
@@ -20,13 +21,13 @@ Window {
     Material.accent: Material.Red
 
     onWidthChanged: {
-      settings.windowWidth = window.width
-      courtView.handleResize()
+        settings.windowWidth = window.width;
+        courtView.handleResize();
     }
 
     onHeightChanged: {
-      settings.windowHeight = window.height
-      courtView.handleResize()
+        settings.windowHeight = window.height;
+        courtView.handleResize();
     }
 
     ColumnLayout {
@@ -36,36 +37,57 @@ Window {
         Layout.fillWidth: true
         Layout.fillHeight: true
 
-        CourtSetupView {
-          id: courtView
-          implicitWidth: window.width 
-          implicitHeight: window.height - 100 //height: window.height - 100 
+        RowLayout {
+            spacing: 10
+            Layout.fillWidth: true
 
-          MouseArea {
-            anchors.fill: parent
-            acceptedButtons: Qt.LeftButton | Qt.RightButton
-            onClicked: function(mouse) {
-              if (mouse.button === Qt.RightButton) 
-              {
-                console.log("Right-click detected at", mouse.x, mouse.y);
-                courtView.handleRightClicked(mouse.x, mouse.y)
-              }
+            CourtSetupView {
+                id: courtView
+                implicitWidth: (window.width - 10) * 0.7
+                implicitHeight: window.height - 100
+
+                MouseArea {
+                    anchors.fill: parent
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    onClicked: function (mouse) {
+                        if (mouse.button === Qt.RightButton) {
+                            console.log("Right-click detected at", mouse.x, mouse.y);
+                            courtView.handleRightClicked(mouse.x, mouse.y);
+                        }
+                    }
+
+                    onPressed: function (mouse) {
+                        if (mouse.button === Qt.LeftButton) {
+                            courtView.handleMousePressed(mouse.x, mouse.y);
+                        }
+                    }
+
+                    onReleased: function (mouse) {
+                        courtView.handleMouseReleased(mouse.x, mouse.y);
+                    }
+
+                    onPositionChanged: function (mouse) {
+                        courtView.handleMouseMoved(mouse.x, mouse.y);
+                    }
+                }
             }
 
-            onPressed: function(mouse) {
-              if (mouse.button === Qt.LeftButton) {
-               courtView.handleMousePressed(mouse.x, mouse.y)
-              }
-            }
+            ColumnLayout {
+                Layout.preferredWidth: (window.width - 10) * 0.3
+                Layout.preferredHeight: window.height - 100
 
-            onReleased: function(mouse) {
-              courtView.handleMouseReleased(mouse.x, mouse.y)
+                spacing: 10
+                PlotView {
+                    id: xPlotView
+                    implicitWidth: parent.width 
+                    implicitHeight: (parent.height - 10) / 2
+                }
+                PlotView {
+                    id: yPlotView
+                    implicitWidth: parent.width 
+                    implicitHeight: (parent.height - 10) / 2
+                }
             }
-
-            onPositionChanged: function(mouse) {
-              courtView.handleMouseMoved(mouse.x, mouse.y)
-            }
-          }
         }
 
         RowLayout {
@@ -74,20 +96,19 @@ Window {
             Layout.preferredHeight: 40
 
             Text {
-              id: video_path
-              text: settings.videoPath  
-              onTextChanged: {
-                settings.videoPath = video_path.text
-              }
+                id: video_path
+                text: settings.videoPath
+                onTextChanged: {
+                    settings.videoPath = video_path.text;
+                }
             }
 
             Button {
                 text: "Browse"
                 onClicked: {
-                   fileDialog.open() 
+                    fileDialog.open();
                 }
             }
-
         }
 
         RowLayout {
@@ -100,7 +121,7 @@ Window {
                 id: loadButton
                 text: "Load Video"
                 onClicked: {
-                  courtVideo.read_video(video_path.text)
+                    courtVideo.read_video(video_path.text);
                 }
 
                 enabled: video_path.text !== ""
@@ -110,7 +131,7 @@ Window {
                 id: prevButton
                 text: "Prev"
                 onClicked: {
-                  courtVideo.get_prev_frame()
+                    courtVideo.get_prev_frame();
                 }
                 enabled: courtVideo.checkPrev
             }
@@ -119,7 +140,7 @@ Window {
                 id: nextButton
                 text: "Next"
                 onClicked: {
-                  courtVideo.get_next_frame()
+                    courtVideo.get_next_frame();
                 }
 
                 enabled: courtVideo.checkNext
@@ -128,18 +149,17 @@ Window {
             Button {
                 text: "Realign Court"
                 onClicked: {
-                  courtView.update_homography()
+                    courtView.update_homography();
                 }
             }
 
             Button {
                 text: "Process frame"
                 onClicked: {
-                  pickle_vision.process_frame()
+                    pickle_vision.process_frame();
                 }
             }
         }
-
     }
 
     FileDialog {
@@ -149,36 +169,42 @@ Window {
     }
 
     CourtVideo {
-      id: courtVideo
+        id: courtVideo
 
-      onPrevAvailable: function(val) {
-        console.log("Prev Available: " + val)
-        prevButton.enabled = val 
-      }
+        onPrevAvailable: function (val) {
+            console.log("Prev Available: " + val);
+            prevButton.enabled = val;
+        }
 
-      onNextAvailable: function(val) {
-        nextButton.enabled = val
-      }
+        onNextAvailable: function (val) {
+            nextButton.enabled = val;
+        }
 
-      onGotImage: function(frame_id, image) {
-        courtView.setImage(frame_id, image)
-      }
+        onGotImage: function (frame_id, image) {
+            courtView.setImage(frame_id, image);
+        }
 
-      onBallDetected: function(frame_id, x, y) {
-        courtView.handleBallDetected(frame_id, x, y)
-      }
+        onBallDetected: function (frame_id, x, y) {
+            courtView.handleBallDetected(frame_id, x, y);
+        }
 
+        onXPlotReady: function (plot_img) {
+            xPlotView.setPlot(plot_img);
+        }
+
+        onYPlotReady: function (plot_img) {
+            yPlotView.setPlot(plot_img);
+        }
     }
 
     Settings {
-      id: settings
-      property string videoPath: "No Video Selected" 
-      property int windowWidth: 640 
-      property int windowHeight: 400
+        id: settings
+        property string videoPath: "No Video Selected"
+        property int windowWidth: 640
+        property int windowHeight: 400
     }
 
-    Component.onDestruction : {
-      settings.videoPath = video_path.text
+    Component.onDestruction: {
+        settings.videoPath = video_path.text;
     }
-
 }
