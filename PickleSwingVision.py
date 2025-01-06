@@ -32,7 +32,7 @@ class PickleSwingVision:
     def bounce_detect(self, ball_track):
         x_ball = [x[0] for x in ball_track]
         y_ball = [x[1] for x in ball_track]
-        bounces = self.bounce_detector.predict(x_ball, y_ball)
+        bounces = list(self.bounce_detector.predict(x_ball, y_ball))
         return bounces
 
 

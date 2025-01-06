@@ -4,6 +4,7 @@ from PySide6.QtGui import QImage
 from PySide6.QtQml import QmlElement
 from PickleSwingVision import PickleSwingVision
 import TrajectoryPlot
+import time
 
 
 def cv_to_qimage(cv_img):
@@ -31,7 +32,9 @@ class CourtVideo(QObject):
     yPlotReady = Signal(QImage)
     prevAvailable = Signal(bool)
     nextAvailable = Signal(bool)
+    isPlaying = Signal(bool)
     ballDetected = Signal(int, int, int)
+    playNext = Signal()
 
     def __init__(self):
         super().__init__()
@@ -45,11 +48,17 @@ class CourtVideo(QObject):
             "cuda",
         )
         self.ball_trajectory = []
+        self.keep_playing = False
+        # self.connect(self.playNext, self.get_next_frame)
         print("Load pickle vison Done!!!!1")
 
     @Property(bool, notify=prevAvailable)
     def checkPrev(self):
         return self.current_frame > 0
+
+    @Property(bool)
+    def isPlaying(self):
+        return self.keep_playing
 
     @Property(int, notify=nextAvailable)
     def checkNext(self):
@@ -62,8 +71,14 @@ class CourtVideo(QObject):
         self.frames = []
         self.get_next_frame()
 
+
     @Slot()
-    def process_current_frame(self):
+    def visualize_bounce_detection(self):
+       bounces =  self.pickle_vision.bounce_detect(self.ball_trajectory)
+
+
+    @Slot()
+    def visualize_ball_trajectory(self):
         if self.current_frame < 2:
             return
         process_frames = self.frames[self.current_frame - 2 : self.current_frame + 1]
@@ -82,12 +97,14 @@ class CourtVideo(QObject):
         x_track = [x if x is not None else 0 for x in x_track]
         y_track = [y if y is not None else 0 for y in y_track]
 
-        print("x_track: ", x_track)
-        print("y_track: ", y_track)
+        # print("x_track: ", x_track)
+        # print("y_track: ", y_track)
+        bounces =  self.pickle_vision.bounce_detect(self.ball_trajectory)
+        print("bounces: ", bounces)
 
         # plot ball track
-        x_plot = TrajectoryPlot.matplotlib_figure_to_qimage(x_track)
-        y_plot = TrajectoryPlot.matplotlib_figure_to_qimage(y_track)
+        x_plot = TrajectoryPlot.matplotlib_figure_to_qimage(x_track, bounces=bounces)
+        y_plot = TrajectoryPlot.matplotlib_figure_to_qimage(y_track, bounces=bounces)
 
         print(f"x_plot: {x_plot.width()} {x_plot.height()}")
         print(f"y_plot: {y_plot.width()} {y_plot.height()}")
@@ -107,6 +124,16 @@ class CourtVideo(QObject):
             )
 
     @Slot()
+    def play(self):
+        self.keep_playing = True
+        # self.get_next_frame()
+        self.playNext.emit()
+
+    @Slot()
+    def pause(self):
+        self.keep_playing = False
+
+    @Slot()
     def get_next_frame(self):
         ret, frame = self.cap.read()
         if ret:
@@ -114,13 +141,19 @@ class CourtVideo(QObject):
         if len(self.frames) > 0:
             self.nextAvailable.emit(True)
         if self.current_frame == len(self.frames) - 1:
+            if self.keep_playing:
+                self.keep_playing = False
             return None
         self.current_frame += 1
-        self.prevAvailable.emit(True)
         image = cv_to_qimage(self.frames[self.current_frame])
         print(f"Frame {self.current_frame}")
+        self.visualize_ball_trajectory()
+
         self.gotImage.emit(self.current_frame, image)
-        self.process_current_frame()
+        self.prevAvailable.emit(True)
+        if self.keep_playing:
+            # self.get_next_frame()
+            self.playNext.emit()
 
     @Slot()
     def get_prev_frame(self):

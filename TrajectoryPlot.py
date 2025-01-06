@@ -4,13 +4,16 @@ from matplotlib.figure import Figure
 from PySide6.QtGui import QImage
 
 
-def matplotlib_figure_to_qimage(y_data, label="", title="", figsize=(5, 4), dpi=100):
+def matplotlib_figure_to_qimage(y_data, bounces = [], label="", title="", figsize=(5, 4), dpi=100):
     # Step 1: Create a Matplotlib figure
     fig = Figure(figsize=figsize, dpi=dpi)
     canvas = FigureCanvas(fig)
     ax = fig.add_subplot(111)
     x_data = np.asarray(range(len(y_data)))
     ax.plot(x_data, np.asarray(y_data), label=label)
+    if bounces:
+        bounces = np.asarray(bounces, dtype=np.int32)
+        ax.scatter(x_data[bounces], np.asarray(y_data)[bounces], color="red", marker="o", label="Bounce")
     ax.set_title(title)
     ax.legend()
     ax.grid()
