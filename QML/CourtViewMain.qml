@@ -159,6 +159,20 @@ Window {
                     pickle_vision.process_frame();
                 }
             }
+
+            Button {
+                id: playBtn
+                text: "Play"
+                onClicked: {
+                    if (courtVideo.isPlaying) {
+                        courtVideo.pause();
+                        playBtn.text = "Play";
+                    } else {
+                        courtVideo.play();
+                        playBtn.text = "Pause";
+                    }
+                }
+            }
         }
     }
 
@@ -195,6 +209,11 @@ Window {
         onYPlotReady: function (plot_img) {
             yPlotView.setPlot(plot_img);
         }
+
+        onPlayNext: {
+          courtVideo.get_next_frame();
+        }
+
     }
 
     Settings {
