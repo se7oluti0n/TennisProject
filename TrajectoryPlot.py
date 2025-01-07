@@ -3,7 +3,6 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 from PySide6.QtGui import QImage
 
-
 def matplotlib_figure_to_qimage(y_data, bounces = [], label="", title="", figsize=(5, 4), dpi=100):
     # Step 1: Create a Matplotlib figure
     fig = Figure(figsize=figsize, dpi=dpi)

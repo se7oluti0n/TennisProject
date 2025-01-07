@@ -1,11 +1,8 @@
 import cv2
-from PySide6.QtCore import QObject, Signal, Slot, Property
+from PySide6.QtCore import QObject, Signal, Slot, QThread
 from PySide6.QtGui import QImage
-from PySide6.QtQml import QmlElement
 from PickleSwingVision import PickleSwingVision
 import TrajectoryPlot
-import time
-
 
 def cv_to_qimage(cv_img):
     """Convert OpenCV image to QImage."""
@@ -19,25 +16,17 @@ def cv_to_qimage(cv_img):
     return qimg
 
 
-QML_IMPORT_NAME = "CourtVideo"
-QML_IMPORT_MAJOR_VERSION = 1
-QML_IMPORT_MINOR_VERSION = 0  # Optional
 
-
-@QmlElement
-class CourtVideo(QObject):
-
+class VideoProcessor(QObject):
     gotImage = Signal(int, QImage)
     xPlotReady = Signal(QImage)
     yPlotReady = Signal(QImage)
-    prevAvailable = Signal(bool)
-    nextAvailable = Signal(bool)
-    isPlaying = Signal(bool)
-    ballDetected = Signal(int, int, int)
-    playNext = Signal()
+    currentFrameChanged = Signal(int)
+    # playNext = Signal()
+    ballDetected = Signal(int, float, float)
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.current_frame = -1
         self.frames = []
         self.pickle_vision = PickleSwingVision(
@@ -49,20 +38,12 @@ class CourtVideo(QObject):
         )
         self.ball_trajectory = []
         self.keep_playing = False
-        # self.connect(self.playNext, self.get_next_frame)
+        self.thread = QThread()
+        self.moveToThread(self.thread)
         print("Load pickle vison Done!!!!1")
+        self.currentFrameChanged.emit(-1)
+        self.thread.start()
 
-    @Property(bool, notify=prevAvailable)
-    def checkPrev(self):
-        return self.current_frame > 0
-
-    @Property(bool)
-    def isPlaying(self):
-        return self.keep_playing
-
-    @Property(int, notify=nextAvailable)
-    def checkNext(self):
-        return self.current_frame < len(self.frames) - 1
 
     @Slot(str)
     def read_video(self, path: str):
@@ -71,11 +52,8 @@ class CourtVideo(QObject):
         self.frames = []
         self.get_next_frame()
 
-
-    @Slot()
-    def visualize_bounce_detection(self):
-       bounces =  self.pickle_vision.bounce_detect(self.ball_trajectory)
-
+    def __instancecheck__(self, instance):
+        return super().__instancecheck__(instance)
 
     @Slot()
     def visualize_ball_trajectory(self):
@@ -83,6 +61,7 @@ class CourtVideo(QObject):
             return
         process_frames = self.frames[self.current_frame - 2 : self.current_frame + 1]
         ball_track = self.pickle_vision.track_ball(process_frames, self.current_frame)
+        self.ballDetected.emit(self.current_frame, ball_track[-1][0], ball_track[-1][1])
 
 
         if not self.ball_trajectory:
@@ -127,7 +106,10 @@ class CourtVideo(QObject):
     def play(self):
         self.keep_playing = True
         # self.get_next_frame()
-        self.playNext.emit()
+        while self.keep_playing:
+            self.get_next_frame()
+        # self.playNext.emit()
+        
 
     @Slot()
     def pause(self):
@@ -138,29 +120,116 @@ class CourtVideo(QObject):
         ret, frame = self.cap.read()
         if ret:
             self.frames.append(frame)
-        if len(self.frames) > 0:
-            self.nextAvailable.emit(True)
-        if self.current_frame == len(self.frames) - 1:
+        else:
             if self.keep_playing:
                 self.keep_playing = False
             return None
         self.current_frame += 1
+        self.currentFrameChanged.emit(self.current_frame)
+
         image = cv_to_qimage(self.frames[self.current_frame])
         print(f"Frame {self.current_frame}")
         self.visualize_ball_trajectory()
 
         self.gotImage.emit(self.current_frame, image)
-        self.prevAvailable.emit(True)
-        if self.keep_playing:
+        # self.prevAvailable.emit(True)
+        # if self.keep_playing:
             # self.get_next_frame()
-            self.playNext.emit()
+            # self.playNext.emit()
 
     @Slot()
     def get_prev_frame(self):
         if self.current_frame == 0 or len(self.frames) == 0:
             return None
         self.current_frame -= 1
+        self.currentFrameChanged.emit(self.current_frame)
+        
         image = cv_to_qimage(self.frames[self.current_frame])
         print(f"Frame {self.current_frame}")
 
         self.gotImage.emit(self.current_frame, image)
+
+    def get_num_frames(self):
+        return len(self.frames)
+
+class Controller(QObject):
+    gotImage = Signal(int, QImage)
+    xPlotReady = Signal(QImage)
+    yPlotReady = Signal(QImage)
+    prevAvailable = Signal(bool)
+    nextAvailable = Signal(bool)
+    playingStatusChanged = Signal(bool)
+    ballDetected = Signal(int, float, float)
+
+    # communicate with model
+    requestReadVideo = Signal(str)
+    requestProcessFrame = Signal()
+    requestPlay = Signal()
+    requestPause = Signal()
+    requestGetNext = Signal()
+    requestGetPrev = Signal()
+
+    def __init__(self):
+        super().__init__()
+        self.videoProcessor = VideoProcessor()
+        self.requestReadVideo.connect(self.videoProcessor.read_video)
+        self.requestPlay.connect(self.videoProcessor.play)
+        self.requestPause.connect(self.videoProcessor.pause)
+        self.requestGetNext.connect(self.videoProcessor.get_next_frame)
+        self.requestGetPrev.connect(self.videoProcessor.get_prev_frame)
+
+        self.videoProcessor.gotImage.connect(self.handleImageReady)
+        self.videoProcessor.xPlotReady.connect(self.handleXplot)
+        self.videoProcessor.yPlotReady.connect(self.handleYplot)
+        self.videoProcessor.currentFrameChanged.connect(self.handleCurrentFrameChanged)
+        self.videoProcessor.ballDetected.connect(self.handleBallDetected)
+        
+    @Slot(str)
+    def read_video(self, path: str):
+        self.requestReadVideo.emit(path)
+
+    @Slot()
+    def play(self):
+        self.requestPlay.emit()
+        self.playingStatusChanged.emit(True)
+        
+    @Slot()
+    def pause(self):
+        self.requestPause.emit()
+        self.playingStatusChanged.emit(False)
+
+    @Slot()
+    def get_next_frame(self):
+        self.requestGetNext.emit()
+
+    @Slot()
+    def get_prev_frame(self):
+        self.requestGetPrev.emit()
+
+    # process data from video processor
+    @Slot(QImage)
+    def handleXplot(self, image):
+        self.xPlotReady.emit(image)
+
+    @Slot(QImage)
+    def handleYplot(self, image):
+        self.yPlotReady.emit(image)
+
+    @Slot(int, QImage)
+    def handleImageReady(self, frame_id, image):
+        self.gotImage.emit(frame_id, image)
+
+    @Slot(int)
+    def handleCurrentFrameChanged(self, currentFrame):
+        if currentFrame <= 0:
+            self.prevAvailable.emit(False)
+        else:
+            self.prevAvailable.emit(True)
+        if currentFrame == self.videoProcessor.get_num_frames() - 1:
+            self.nextAvailable.emit(False)
+        else:
+            self.nextAvailable.emit(True)
+
+    @Slot(int, float, float)
+    def handleBallDetected(self, frame_id, x, y):
+        self.ballDetected.emit(frame_id, x, y)

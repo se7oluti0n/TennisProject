@@ -14,7 +14,7 @@ from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtQuickControls2 import QQuickStyle
 
 import CourtSetupView
-import CourtVideo
+from CourtVideo import Controller
 import PlotView
 import rc_style
 
@@ -28,6 +28,8 @@ if __name__ == "__main__":
     if options.qmljsdebugger:
         QQmlDebuggingEnabler.enableDebugging(True)
 
+    court_video = Controller()
+
     app = QGuiApplication(sys.argv)
     QQuickStyle.setStyle("Material")
     app.setOrganizationName("Manhattan")
@@ -39,6 +41,7 @@ if __name__ == "__main__":
 
     engine = QQmlApplicationEngine()
 
+    engine.rootContext().setContextProperty("courtVideo", court_video)
     engine.addImportPath(sys.path[0])
     engine.loadFromModule("QML", "CourtViewMain")
     if not engine.rootObjects():

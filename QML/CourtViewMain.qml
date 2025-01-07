@@ -8,7 +8,7 @@ import QtQuick.Dialogs
 import QtQuick.Layouts
 import QtQuick.Controls.Material
 import CourtSetupView
-import CourtVideo
+// import CourtVideo
 import PlotView
 
 Window {
@@ -133,7 +133,7 @@ Window {
                 onClicked: {
                     courtVideo.get_prev_frame();
                 }
-                enabled: courtVideo.checkPrev
+                enabled: false
             }
 
             Button {
@@ -143,7 +143,7 @@ Window {
                     courtVideo.get_next_frame();
                 }
 
-                enabled: courtVideo.checkNext
+                enabled: false 
             }
 
             Button {
@@ -164,12 +164,10 @@ Window {
                 id: playBtn
                 text: "Play"
                 onClicked: {
-                    if (courtVideo.isPlaying) {
+                    if (playBtn.text === "Pause") {
                         courtVideo.pause();
-                        playBtn.text = "Play";
                     } else {
                         courtVideo.play();
-                        playBtn.text = "Pause";
                     }
                 }
             }
@@ -182,36 +180,36 @@ Window {
         onAccepted: video_path.text = selectedFile
     }
 
-    CourtVideo {
-        id: courtVideo
+    Connections {
+        target: courtVideo
 
-        onPrevAvailable: function (val) {
+        function onPrevAvailable (val) {
             console.log("Prev Available: " + val);
             prevButton.enabled = val;
         }
 
-        onNextAvailable: function (val) {
+        function onNextAvailable (val) {
             nextButton.enabled = val;
         }
 
-        onGotImage: function (frame_id, image) {
+        function onGotImage (frame_id, image) {
             courtView.setImage(frame_id, image);
         }
 
-        onBallDetected: function (frame_id, x, y) {
+        function onBallDetected (frame_id, x, y) {
             courtView.handleBallDetected(frame_id, x, y);
         }
 
-        onXPlotReady: function (plot_img) {
+        function onXPlotReady (plot_img) {
             xPlotView.setPlot(plot_img);
         }
 
-        onYPlotReady: function (plot_img) {
+        function onYPlotReady (plot_img) {
             yPlotView.setPlot(plot_img);
         }
 
-        onPlayNext: {
-          courtVideo.get_next_frame();
+        function onPlayingStatusChanged (isPlaying) {
+            playBtn.text = isPlaying ? "Pause" : "Play"; 
         }
 
     }
