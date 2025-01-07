@@ -1,6 +1,9 @@
-from bounce_detector import BounceDetector
+import sys
+sys.path.append('./ai')
+
+from ai.bounce_detector import BounceDetector
 # from person_detector import PersonDetector
-from ball_detector import BallDetector
+from ai.ball_detector import BallDetector
 
 
 class PickleSwingVision:

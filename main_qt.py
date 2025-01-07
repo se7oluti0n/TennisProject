@@ -4,22 +4,21 @@ from __future__ import annotations
 
 from argparse import ArgumentParser, RawTextHelpFormatter
 from pathlib import Path
-import sys
 
 from PySide6.QtQml import qmlRegisterType, QQmlDebuggingEnabler
 
 import sys
+sys.path.append('./qml_components')
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtQuickControls2 import QQuickStyle
 
 import CourtSetupView
-from CourtVideo import Controller
+from CourtVideo import VideoController
 import PlotView
-import rc_style
+import os
 
 if __name__ == "__main__":
-
     argument_parser = ArgumentParser(description="Scene Graph Painted Item Example",
                                      formatter_class=RawTextHelpFormatter)
     argument_parser.add_argument("-qmljsdebugger", action="store",
@@ -28,20 +27,18 @@ if __name__ == "__main__":
     if options.qmljsdebugger:
         QQmlDebuggingEnabler.enableDebugging(True)
 
-    court_video = Controller()
+    video_controller = VideoController()
 
     app = QGuiApplication(sys.argv)
+
     QQuickStyle.setStyle("Material")
     app.setOrganizationName("Manhattan")
     app.setOrganizationDomain("manhattan.vn")
     app.setApplicationName("CourtView")
 
-    #qmlRegisterType(CourtSetupView, "CourtSetupView", 1, 0, "CourtSetupView")
-    #qmlRegisterType(CourtVideo, "CourtVideo", 1, 0, "CourtVideo")
-
     engine = QQmlApplicationEngine()
 
-    engine.rootContext().setContextProperty("courtVideo", court_video)
+    engine.rootContext().setContextProperty("video_controller", video_controller)
     engine.addImportPath(sys.path[0])
     engine.loadFromModule("QML", "CourtViewMain")
     if not engine.rootObjects():

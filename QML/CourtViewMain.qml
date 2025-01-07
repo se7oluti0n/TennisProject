@@ -6,9 +6,8 @@ import QtCore
 import QtQuick.Controls
 import QtQuick.Dialogs
 import QtQuick.Layouts
-import QtQuick.Controls.Material
+import QtQuick.Controls.Material 2.15
 import CourtSetupView
-// import CourtVideo
 import PlotView
 
 Window {
@@ -16,9 +15,13 @@ Window {
     width: settings.windowWidth
     height: settings.windowHeight
     visible: true
-    title: "Hello World"
+    title: "Pickleball Tracker"
+
     Material.theme: Material.Dark
-    Material.accent: Material.Red
+    Material.primary: "#6200EE"       // Primary color
+    Material.accent: "#03DAC6"        // Accent color
+    Material.foreground: "#FFFFFF"    // Foreground color (e.g., text)
+    Material.background: "#121212"    // Background color
 
     onWidthChanged: {
         settings.windowWidth = window.width;
@@ -121,7 +124,7 @@ Window {
                 id: loadButton
                 text: "Load Video"
                 onClicked: {
-                    courtVideo.read_video(video_path.text);
+                    video_controller.read_video(video_path.text);
                 }
 
                 enabled: video_path.text !== ""
@@ -131,7 +134,7 @@ Window {
                 id: prevButton
                 text: "Prev"
                 onClicked: {
-                    courtVideo.get_prev_frame();
+                    video_controller.get_prev_frame();
                 }
                 enabled: false
             }
@@ -140,7 +143,7 @@ Window {
                 id: nextButton
                 text: "Next"
                 onClicked: {
-                    courtVideo.get_next_frame();
+                    video_controller.get_next_frame();
                 }
 
                 enabled: false 
@@ -165,9 +168,9 @@ Window {
                 text: "Play"
                 onClicked: {
                     if (playBtn.text === "Pause") {
-                        courtVideo.pause();
+                        video_controller.pause();
                     } else {
-                        courtVideo.play();
+                        video_controller.play();
                     }
                 }
             }
@@ -181,7 +184,7 @@ Window {
     }
 
     Connections {
-        target: courtVideo
+        target: video_controller
 
         function onPrevAvailable (val) {
             console.log("Prev Available: " + val);
