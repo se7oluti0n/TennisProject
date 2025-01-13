@@ -2,9 +2,11 @@ from PySide6.QtGui import QPainter, QBrush, QColor, QImage, QPixmap, QPen, QMous
 from PySide6.QtQml import QmlElement
 from PySide6.QtCore import Signal, Slot
 from PySide6.QtQuick import QQuickPaintedItem
+import json
 
 import numpy as np
 import cv2
+import os
 
 QML_IMPORT_NAME = "CourtSetupView"
 QML_IMPORT_MAJOR_VERSION = 1
@@ -16,10 +18,10 @@ class CourtSetupView(QQuickPaintedItem):
         super().__init__(parent)
         self._ref2img_homography = np.matrix(np.eye(3))
 
-        self._court_reference = {
+        self._court_reference_base = {
             "baseline_top" : np.asarray([(286, 561), (896, 561)]),
             "baseline_bottom" :np.asarray ([(286, 1902), (896, 1902)]),
-            "net" :np.asarray ([(286, 1171), (896, 1171)]),
+            "net" :np.asarray ([(286, 1231), (896, 1231)]),
             "left_court_line" :np.asarray ([(286, 561), (286, 1902)]),
             "right_court_line" :np.asarray ([(896, 561), (896, 1902)]),
             "top_inner_line" :np.asarray ([(286, 1018), (896, 1018)]),
@@ -27,6 +29,12 @@ class CourtSetupView(QQuickPaintedItem):
             "top_middle_line" :np.asarray ([(591, 561), (591, 1018)]),
             "bottom_middle_line" :np.asarray ([(591, 1445), (591, 1902)]),
         }
+
+
+        self._court_reference = self._court_reference_base.copy()
+        for key in self._court_reference:
+            self._court_reference[key] = self._court_reference_base[key] - self._court_reference_base["baseline_top"][0]
+
         self._pixmap = None
         self._draw_court = self._court_reference.copy() 
         self._draw_court["baseline_top"] =np.asarray ([(50, 10), (100, 10)])
@@ -37,6 +45,7 @@ class CourtSetupView(QQuickPaintedItem):
         self.find_initial_homography()
         self._current_frame_id = -1
         self.ball_xy = None
+        self.bounce_xy_ref = {} 
 
     def find_initial_homography(self):
         dstPoints = np.array([*self._draw_court["baseline_top"], *self._draw_court["baseline_bottom"]], dtype=np.float32)
@@ -116,6 +125,36 @@ class CourtSetupView(QQuickPaintedItem):
                 self.update()
 
     @Slot()
+    def saveHomography(self):
+        print("save homography", self._ref2img_homography)
+        homography = self._ref2img_homography.tolist()
+        with open("homography.json", "w") as f:
+            json.dump(homography, f)
+
+
+    @Slot()
+    def loadHomography(self):
+        if not os.path.exists("homography.json"):
+            return
+        with open("homography.json", "r") as f:
+            homography = json.load(f)
+
+        self._ref2img_homography = np.array(homography)
+        self._img2ref_homography = cv2.invert(self._ref2img_homography)[1]
+        print("loaded homography", self._ref2img_homography)
+        # update all draw court points
+        print("update draw court")
+        print("update draw court, before: ", self._draw_court)
+        for key in self._court_reference:
+            in_point = np.array([*self._court_reference[key]], dtype=np.float32).reshape(-1, 1, 2) 
+            self._draw_court[key] = np.int32(cv2.perspectiveTransform(in_point, self._ref2img_homography).reshape(-1, 2))
+
+        print("update draw court, after: ", self._draw_court)
+        self.update()
+
+            
+
+    @Slot()
     def update_homography(self):
         if len(self._points_for_update_homography) >= 4:
             dstPoints = []
@@ -145,16 +184,30 @@ class CourtSetupView(QQuickPaintedItem):
         self.ball_xy = (int(self.scale_x * x), int(self.scale_y * y)) # (x, y)
         self.update()
 
+    @Slot(list)
+    def handleBounceDetected(self, bounces: list):
+        for frame_id, x, y in bounces:
+            bounce_xy = (int(self.scale_x * x), int(self.scale_y * y)) 
+            # transform to court coordinates
+            bounce_xy_arr = np.array(bounce_xy, dtype=np.float32).reshape(-1, 1, 2)
+            self.bounce_xy_ref[frame_id] = np.int32(
+                cv2.perspectiveTransform(bounce_xy_arr, self._img2ref_homography).reshape(-1, 2))
+            self.update()
+
 
     def paint(self, painter: QPainter):
-        
+        print("paint event")        
         # draw the court lines
         if self._pixmap is not None:
             painter.drawPixmap(0, 0, self._pixmap)
-        
-        # Set the brush for the fill color
-        # painter.setBrush(QColor(200, 150, 255))  # Light purple
 
+        self.paint_court(painter)
+        self.paint_ball_detection(painter)
+        self.paint_mini_map(painter)
+        
+
+    def paint_court(self, painter: QPainter):
+        # draw the court lines
         # Set the pen for the border
         pen = QPen(QColor(100, 100, 255), 4)  # Blue border with width 4
         painter.setPen(pen)
@@ -163,15 +216,10 @@ class CourtSetupView(QQuickPaintedItem):
         #rect = self.boundingRect()
         #painter.drawRect(rect.adjusted(10, 10, -10, -10))  # Add padding
 
-        painter.drawLine(*self._draw_court["baseline_top"][0], *self._draw_court["baseline_top"][1])
-        painter.drawLine(*self._draw_court["baseline_bottom"][0], *self._draw_court["baseline_bottom"][1])
-        painter.drawLine(*self._draw_court["net"][0], *self._draw_court["net"][1])
-        painter.drawLine(*self._draw_court["left_court_line"][0], *self._draw_court["left_court_line"][1])
-        painter.drawLine(*self._draw_court["right_court_line"][0], *self._draw_court["right_court_line"][1])
-        painter.drawLine(*self._draw_court["top_inner_line"][0], *self._draw_court["top_inner_line"][1])
-        painter.drawLine(*self._draw_court["bottom_inner_line"][0], *self._draw_court["bottom_inner_line"][1])
-        painter.drawLine(*self._draw_court["top_middle_line"][0], *self._draw_court["top_middle_line"][1])
-        painter.drawLine(*self._draw_court["bottom_middle_line"][0], *self._draw_court["bottom_middle_line"][1])
+        #
+        for key in self._draw_court:
+            painter.drawLine(*self._draw_court[key][0], *self._draw_court[key][1])
+
         # draw the court reference
 
         # draw the points for update homography
@@ -183,6 +231,7 @@ class CourtSetupView(QQuickPaintedItem):
             painter.setPen(pen)
             painter.drawEllipse(self._draw_court[key][point][0] - 5, self._draw_court[key][point][1] - 5, 10, 10)
             
+    def paint_ball_detection(self, painter: QPainter):
         if self.ball_xy: 
             # ball_xy = self.ball_xy[self._current_frame_id]
             # print("ball_xy", self.ball_xy)
@@ -191,4 +240,30 @@ class CourtSetupView(QQuickPaintedItem):
             painter.drawEllipse(self.ball_xy[0] - 5, self.ball_xy[1] - 5, 10, 10)
         else:
             print("no ball xy for frame", self._current_frame_id, self.ball_xy)
+
+
+    def paint_mini_map(self, painter: QPainter):
+
+        # TODO: 1. paint court line scaled 
+        draw_height = self.height() * 0.3
+        ref_height = self._court_reference["left_court_line"][1][1] - self._court_reference["left_court_line"][0][1] 
+        draw_scale = draw_height / ref_height
+
+        pen = QPen(QColor(0, 255, 0), 2)  # Blue border with width 4
+        painter.setPen(pen)
+        draw_ref_cout = {}
+        for key in self._court_reference:
+            draw_ref_cout[key] = self._court_reference[key] * draw_scale + 10
+            painter.drawLine(*draw_ref_cout[key][0], *draw_ref_cout[key][1])
+
+
+
+        # TODO: 2. paint bounce point
+        for frame_id in self.bounce_xy_ref:
+            bounce_draw = self.bounce_xy_ref[frame_id] * draw_scale + 10
+            bounce_draw = np.int32(bounce_draw).reshape(-1, 2)
+            pen = QPen(QColor(255, 0, 0), 1)  # Blue border with width 4
+            painter.setPen(pen)
+            painter.setBrush(QColor(255, 0, 0))
+            painter.drawEllipse(bounce_draw[0][0] - 1, bounce_draw[0][1] - 1, 2, 2)
 

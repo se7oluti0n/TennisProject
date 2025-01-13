@@ -10,6 +10,7 @@ class VideoController(QObject):
     nextAvailable = Signal(bool)
     playingStatusChanged = Signal(bool)
     ballDetected = Signal(int, float, float)
+    bouncesDetected = Signal(list)
 
     # communicate with model
     requestReadVideo = Signal(str)
@@ -33,6 +34,7 @@ class VideoController(QObject):
         self.videoProcessor.yPlotReady.connect(self.handleYplot)
         self.videoProcessor.currentFrameChanged.connect(self.handleCurrentFrameChanged)
         self.videoProcessor.ballDetected.connect(self.handleBallDetected)
+        self.videoProcessor.bouncesDetected.connect(self.handleBouncesDetected)
 
     @Slot(str)
     def read_video(self, path: str):
@@ -84,3 +86,8 @@ class VideoController(QObject):
     @Slot(int, float, float)
     def handleBallDetected(self, frame_id, x, y):
         self.ballDetected.emit(frame_id, x, y)
+    
+    @Slot(list)
+    def handleBouncesDetected(self, bounces: list):
+        print("handleBouncesDetected: ", bounces)
+        self.bouncesDetected.emit(bounces)

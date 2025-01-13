@@ -112,6 +112,18 @@ Window {
                     fileDialog.open();
                 }
             }
+            Button {
+                text: "Save Homography"
+                onClicked: {
+                   courtView.saveHomography(); 
+                }
+            }
+            Button {
+                text: "Load Homography"
+                onClicked: {
+                  courtView.loadHomography();
+                }
+            }
         }
 
         RowLayout {
@@ -136,7 +148,7 @@ Window {
                 onClicked: {
                     video_controller.get_prev_frame();
                 }
-                enabled: false
+                // enabled: false
             }
 
             Button {
@@ -146,7 +158,7 @@ Window {
                     video_controller.get_next_frame();
                 }
 
-                enabled: false 
+                // enabled: false 
             }
 
             Button {
@@ -188,11 +200,11 @@ Window {
 
         function onPrevAvailable (val) {
             console.log("Prev Available: " + val);
-            prevButton.enabled = val;
+            // prevButton.enabled = val;
         }
 
         function onNextAvailable (val) {
-            nextButton.enabled = val;
+            // nextButton.enabled = val;
         }
 
         function onGotImage (frame_id, image) {
@@ -201,6 +213,10 @@ Window {
 
         function onBallDetected (frame_id, x, y) {
             courtView.handleBallDetected(frame_id, x, y);
+        }
+
+        function onBouncesDetected(bounces) {
+            courtView.handleBounceDetected(bounces)
         }
 
         function onXPlotReady (plot_img) {

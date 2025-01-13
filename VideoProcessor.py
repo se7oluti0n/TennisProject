@@ -23,6 +23,7 @@ class VideoProcessor(QObject):
     yPlotReady = Signal(QImage)
     currentFrameChanged = Signal(int)
     ballDetected = Signal(int, float, float)
+    bouncesDetected = Signal(list)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -55,18 +56,29 @@ class VideoProcessor(QObject):
             return
         process_frames = self.frames[self.current_frame - 2 : self.current_frame + 1]
         ball_track = self.pickle_vision.track_ball(process_frames, self.current_frame)
-
+        # ball_track = []
+        # ball2 = self.pickle_vision.track_ball2(self.frames[self.current_frame])
+        # if ball2:
+        #     result = ball2[1]
+        #     print ("yoto detect:", result)
+        #     ball_track.append(((result[0] + result[2]) / 2, (result[1] + result[3]) / 2))
+        # else:
+        #     ball_track.append((None, None))
+        
         if not self.ball_trajectory:
             self.ball_trajectory = ball_track
         else:
             self.ball_trajectory.append(ball_track[-1])
 
         x_track, y_track = self.pickle_vision.smooth_ball_track(self.ball_trajectory)
+        # x_track = [x[0] for x in self.ball_trajectory]
+        # y_track = [x[1] for x in self.ball_trajectory]
         x_track = [x if x is not None else 0 for x in x_track]
         y_track = [y if y is not None else 0 for y in y_track]
 
         bounces = self.pickle_vision.bounce_detect(self.ball_trajectory)
-        print("bounces: ", bounces)
+        # print("bounces: ", bounces)
+        self.bouncesDetected.emit([(frame_id, x_track[frame_id], y_track[frame_id]) for frame_id in bounces])
 
         # plot ball track
         x_plot = TrajectoryPlot.matplotlib_figure_to_qimage(x_track, bounces=bounces, label="x_trajectory")

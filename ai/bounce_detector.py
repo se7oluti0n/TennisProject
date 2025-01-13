@@ -60,7 +60,7 @@ class BounceDetector:
     
     def smooth_predictions(self, x_ball, y_ball):
         is_none = [int(x is None) for x in x_ball]
-        interp = 5
+        interp = 4
         counter = 0
         for num in range(interp, len(x_ball)-1):
             if not x_ball[num] and sum(is_none[num-interp:num]) == 0 and counter < 3:

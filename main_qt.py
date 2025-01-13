@@ -14,9 +14,8 @@ from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtQuickControls2 import QQuickStyle
 
 import CourtSetupView
-from CourtVideo import VideoController
+from VideoController import VideoController
 import PlotView
-import os
 
 if __name__ == "__main__":
     argument_parser = ArgumentParser(description="Scene Graph Painted Item Example",
