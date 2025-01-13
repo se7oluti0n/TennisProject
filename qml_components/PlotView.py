@@ -10,7 +10,7 @@ QML_IMPORT_NAME = "PlotView"
 QML_IMPORT_MAJOR_VERSION = 1
 QML_IMPORT_MINOR_VERSION = 0  # Optional
 
-ENABLE_DEBUG = True
+ENABLE_DEBUG = False
 
 @QmlElement
 class PlotView(QQuickPaintedItem):

@@ -33,6 +33,7 @@ Window {
         courtView.handleResize();
     }
 
+
     ColumnLayout {
         spacing: 10
         //Layout.preferredWidth : parent.width
@@ -54,7 +55,7 @@ Window {
                     acceptedButtons: Qt.LeftButton | Qt.RightButton
                     onClicked: function (mouse) {
                         if (mouse.button === Qt.RightButton) {
-                            console.log("Right-click detected at", mouse.x, mouse.y);
+                            // console.log("Right-click detected at", mouse.x, mouse.y);
                             courtView.handleRightClicked(mouse.x, mouse.y);
                         }
                     }
@@ -199,7 +200,7 @@ Window {
         target: video_controller
 
         function onPrevAvailable (val) {
-            console.log("Prev Available: " + val);
+            // console.log("Prev Available: " + val);
             // prevButton.enabled = val;
         }
 
@@ -242,5 +243,6 @@ Window {
 
     Component.onDestruction: {
         settings.videoPath = video_path.text;
+        video_controller.stop();
     }
 }

@@ -3,10 +3,8 @@ sys.path.append('./ai')
 sys.path.append('./trackers')
 
 from ai.bounce_detector import BounceDetector
-# from person_detector import PersonDetector
 from ai.ball_detector import BallDetector
 from trackers.ball_tracker import BallTracker
-
 
 class PickleSwingVision:
     def __init__(self, args, device):
@@ -17,8 +15,8 @@ class PickleSwingVision:
 
         self.ball_detector = BallDetector(args[ "path_ball_track_model" ], device)
         self.bounce_detector = BounceDetector(args[ "path_bounce_model" ])
-        self.ball_tracker = BallTracker(model_path='models2/yolo5_last.pt')
-        # self.ball_tracker = BallTracker(model_path='models/yolo5m.pt')
+        # self.ball_tracker = BallTracker(model_path='models2/yolo5_last.pt')
+        self.ball_tracker = BallTracker(model_path='models/yolov5_lu.pt')
         self._ball_trajectory = {} 
         self._ball_detections = []
 

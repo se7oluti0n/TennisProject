@@ -1,6 +1,6 @@
 from PySide6.QtGui import QPainter, QBrush, QColor, QImage, QPixmap, QPen, QMouseEvent
 from PySide6.QtQml import QmlElement
-from PySide6.QtCore import Signal, Slot
+from PySide6.QtCore import Slot
 from PySide6.QtQuick import QQuickPaintedItem
 import json
 
@@ -152,8 +152,6 @@ class CourtSetupView(QQuickPaintedItem):
         print("update draw court, after: ", self._draw_court)
         self.update()
 
-            
-
     @Slot()
     def update_homography(self):
         if len(self._points_for_update_homography) >= 4:
@@ -180,7 +178,7 @@ class CourtSetupView(QQuickPaintedItem):
 
     @Slot(int, int, int)
     def handleBallDetected(self, frame_id, x, y):
-        print("handleBallDetected", frame_id, x, y)
+        # print("handleBallDetected", frame_id, x, y)
         self.ball_xy = (int(self.scale_x * x), int(self.scale_y * y)) # (x, y)
         self.update()
 
@@ -196,7 +194,7 @@ class CourtSetupView(QQuickPaintedItem):
 
 
     def paint(self, painter: QPainter):
-        print("paint event")        
+        # print("paint event")        
         # draw the court lines
         if self._pixmap is not None:
             painter.drawPixmap(0, 0, self._pixmap)
@@ -238,9 +236,6 @@ class CourtSetupView(QQuickPaintedItem):
             pen = QPen(QColor(255, 0, 0), 2)  # Blue border with width 4
             painter.setPen(pen)
             painter.drawEllipse(self.ball_xy[0] - 5, self.ball_xy[1] - 5, 10, 10)
-        else:
-            print("no ball xy for frame", self._current_frame_id, self.ball_xy)
-
 
     def paint_mini_map(self, painter: QPainter):
 

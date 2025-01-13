@@ -28,6 +28,7 @@ class VideoController(QObject):
         self.requestPause.connect(self.videoProcessor.pausePlayLoop)
         self.requestGetNext.connect(self.videoProcessor.processNextFrame)
         self.requestGetPrev.connect(self.videoProcessor.get_prev_frame)
+        self.destroyed.connect(self.stop)
 
         self.videoProcessor.gotImage.connect(self.handleImageReady)
         self.videoProcessor.xPlotReady.connect(self.handleXplot)
@@ -35,6 +36,11 @@ class VideoController(QObject):
         self.videoProcessor.currentFrameChanged.connect(self.handleCurrentFrameChanged)
         self.videoProcessor.ballDetected.connect(self.handleBallDetected)
         self.videoProcessor.bouncesDetected.connect(self.handleBouncesDetected)
+
+    @Slot()
+    def stop(self):
+        print("stop video processorl")
+        self.videoProcessor.stop()
 
     @Slot(str)
     def read_video(self, path: str):
@@ -47,8 +53,9 @@ class VideoController(QObject):
 
     @Slot()
     def pause(self):
-        self.requestPause.emit()
+        print("======================== on button paused =========")
         self.playingStatusChanged.emit(False)
+        self.videoProcessor.pausePlayLoop()
 
     @Slot()
     def get_next_frame(self):
@@ -89,5 +96,5 @@ class VideoController(QObject):
     
     @Slot(list)
     def handleBouncesDetected(self, bounces: list):
-        print("handleBouncesDetected: ", bounces)
+        # print("handleBouncesDetected: ", bounces)
         self.bouncesDetected.emit(bounces)

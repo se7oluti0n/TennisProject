@@ -43,6 +43,17 @@ class VideoProcessor(QObject):
         self.currentFrameChanged.emit(-1)
         self.thread.start()
 
+    @Slot()
+    def stop(self):
+        try:
+            self.cap.release()
+
+            self.keep_playing = False
+            self.thread.quit()
+            self.thread.wait()
+        except:
+            print("Exception when trying to stop thread")
+
     @Slot(str)
     def read_video(self, path: str):
         self.cap = cv2.VideoCapture(path, cv2.CAP_FFMPEG)
@@ -60,7 +71,7 @@ class VideoProcessor(QObject):
         ball2 = self.pickle_vision.track_ball2(self.frames[self.current_frame])
         if ball2:
             result = ball2[1]
-            print ("yoto detect:", result)
+            # print ("yoto detect:", result)
             ball_track.append(((result[0] + result[2]) / 2, (result[1] + result[3]) / 2))
         else:
             ball_track.append((None, None))
@@ -93,7 +104,7 @@ class VideoProcessor(QObject):
             and ball_track[-1][0] is not None
             and ball_track[-1][1] is not None
         ):
-            print("Ball track: ", ball_track)
+            # print("Ball track: ", ball_track)
             self.ballDetected.emit(
                 self.current_frame, ball_track[-1][0], ball_track[-1][1]
             )
@@ -104,8 +115,8 @@ class VideoProcessor(QObject):
         while self.keep_playing:
             self.processNextFrame()
 
-    @Slot()
     def pausePlayLoop(self):
+        print("---------------------------- pause play loop")
         self.keep_playing = False
 
     @Slot()
