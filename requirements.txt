@@ -10,3 +10,4 @@ tqdm==4.67.1
 opencv_python==4.10.0.84
 catboost==1.2.7
 pyside6==6.8.1
+ultralytics==8.3.49

@@ -55,15 +55,15 @@ class VideoProcessor(QObject):
         if self.current_frame < 2:
             return
         process_frames = self.frames[self.current_frame - 2 : self.current_frame + 1]
-        ball_track = self.pickle_vision.track_ball(process_frames, self.current_frame)
-        # ball_track = []
-        # ball2 = self.pickle_vision.track_ball2(self.frames[self.current_frame])
-        # if ball2:
-        #     result = ball2[1]
-        #     print ("yoto detect:", result)
-        #     ball_track.append(((result[0] + result[2]) / 2, (result[1] + result[3]) / 2))
-        # else:
-        #     ball_track.append((None, None))
+        # ball_track = self.pickle_vision.track_ball(process_frames, self.current_frame)
+        ball_track = []
+        ball2 = self.pickle_vision.track_ball2(self.frames[self.current_frame])
+        if ball2:
+            result = ball2[1]
+            print ("yoto detect:", result)
+            ball_track.append(((result[0] + result[2]) / 2, (result[1] + result[3]) / 2))
+        else:
+            ball_track.append((None, None))
         
         if not self.ball_trajectory:
             self.ball_trajectory = ball_track
