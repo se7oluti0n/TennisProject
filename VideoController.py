@@ -20,9 +20,9 @@ class VideoController(QObject):
     requestGetNext = Signal()
     requestGetPrev = Signal()
 
-    def __init__(self):
+    def __init__(self, videoProcessor: VideoProcessor):
         super().__init__()
-        self.videoProcessor = VideoProcessor()
+        self.videoProcessor = videoProcessor 
         self.requestReadVideo.connect(self.videoProcessor.read_video)
         self.requestPlay.connect(self.videoProcessor.startPlayLoop)
         self.requestPause.connect(self.videoProcessor.pausePlayLoop)

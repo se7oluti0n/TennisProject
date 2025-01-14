@@ -71,7 +71,6 @@ class VideoProcessor(QObject):
         ball2 = self.pickle_vision.track_ball2(self.frames[self.current_frame])
         if ball2:
             result = ball2[1]
-            # print ("yoto detect:", result)
             ball_track.append(((result[0] + result[2]) / 2, (result[1] + result[3]) / 2))
         else:
             ball_track.append((None, None))
@@ -82,13 +81,11 @@ class VideoProcessor(QObject):
             self.ball_trajectory.append(ball_track[-1])
 
         x_track, y_track = self.pickle_vision.smooth_ball_track(self.ball_trajectory)
-        # x_track = [x[0] for x in self.ball_trajectory]
-        # y_track = [x[1] for x in self.ball_trajectory]
+
         x_track = [x if x is not None else 0 for x in x_track]
         y_track = [y if y is not None else 0 for y in y_track]
 
         bounces = self.pickle_vision.bounce_detect(self.ball_trajectory)
-        # print("bounces: ", bounces)
         self.bouncesDetected.emit([(frame_id, x_track[frame_id], y_track[frame_id]) for frame_id in bounces])
 
         # plot ball track

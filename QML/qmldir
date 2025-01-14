@@ -1,2 +1,2 @@
-module Example
-CourtViewMain 254.0 CourtViewMain.qml
+module QmlUI
+CourtViewMain 1.0 CourtViewMain.qml

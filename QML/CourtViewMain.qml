@@ -3,12 +3,15 @@
 
 import QtQuick
 import QtCore
+import QtCharts
 import QtQuick.Controls
 import QtQuick.Dialogs
 import QtQuick.Layouts
 import QtQuick.Controls.Material 2.15
 import CourtSetupView
-import PlotView
+import "."
+
+// import PlotView
 
 Window {
     id: window
@@ -32,7 +35,6 @@ Window {
         settings.windowHeight = window.height;
         courtView.handleResize();
     }
-
 
     ColumnLayout {
         spacing: 10
@@ -76,22 +78,29 @@ Window {
                 }
             }
 
-            ColumnLayout {
-                Layout.preferredWidth: (window.width - 10) * 0.3
-                Layout.preferredHeight: window.height - 100
-
-                spacing: 10
-                PlotView {
-                    id: xPlotView
-                    implicitWidth: parent.width 
-                    implicitHeight: (parent.height - 10) / 2
-                }
-                PlotView {
-                    id: yPlotView
-                    implicitWidth: parent.width 
-                    implicitHeight: (parent.height - 10) / 2
-                }
+            BallChart {
+                id: ball_chart
+                implicitWidth: (window.width - 10) * 0.3
+                implicitHeight: window.height - 100
             }
+            // ColumnLayout {
+            //     Layout.preferredWidth: (window.width - 10) * 0.3
+            //     Layout.preferredHeight: window.height - 100
+            //
+            //     spacing: 10
+            //
+            //     PlotView {
+            //         id: xPlotView
+            //         implicitWidth: parent.width
+            //         implicitHeight: (parent.height - 10) / 2
+            //     }
+            //     PlotView {
+            //         id: yPlotView
+            //         implicitWidth: parent.width
+            //         implicitHeight: (parent.height - 10) / 2
+            //     }
+            //
+            // }
         }
 
         RowLayout {
@@ -116,13 +125,13 @@ Window {
             Button {
                 text: "Save Homography"
                 onClicked: {
-                   courtView.saveHomography(); 
+                    courtView.saveHomography();
                 }
             }
             Button {
                 text: "Load Homography"
                 onClicked: {
-                  courtView.loadHomography();
+                    courtView.loadHomography();
                 }
             }
         }
@@ -159,7 +168,7 @@ Window {
                     video_controller.get_next_frame();
                 }
 
-                // enabled: false 
+                // enabled: false
             }
 
             Button {
@@ -199,41 +208,69 @@ Window {
     Connections {
         target: video_controller
 
-        function onPrevAvailable (val) {
-            // console.log("Prev Available: " + val);
-            // prevButton.enabled = val;
+        function onPrevAvailable(val) {
+        // console.log("Prev Available: " + val);
+        // prevButton.enabled = val;
         }
 
-        function onNextAvailable (val) {
-            // nextButton.enabled = val;
+        function onNextAvailable(val) {
+        // nextButton.enabled = val;
         }
 
-        function onGotImage (frame_id, image) {
+        function onGotImage(frame_id, image) {
             courtView.setImage(frame_id, image);
         }
 
-        function onBallDetected (frame_id, x, y) {
+        function onBallDetected(frame_id, x, y) {
             courtView.handleBallDetected(frame_id, x, y);
         }
 
         function onBouncesDetected(bounces) {
-            courtView.handleBounceDetected(bounces)
+            courtView.handleBounceDetected(bounces);
         }
 
-        function onXPlotReady (plot_img) {
-            xPlotView.setPlot(plot_img);
+        function onXPlotReady(plot_img) {
+        // xPlotView.setPlot(plot_img);
         }
 
-        function onYPlotReady (plot_img) {
-            yPlotView.setPlot(plot_img);
+        function onYPlotReady(plot_img) {
+        // yPlotView.setPlot(plot_img);
         }
 
-        function onPlayingStatusChanged (isPlaying) {
-            playBtn.text = isPlaying ? "Pause" : "Play"; 
+        function onPlayingStatusChanged(isPlaying) {
+            playBtn.text = isPlaying ? "Pause" : "Play";
         }
-
     }
 
+    Connections {
+        target: chart_controller
+
+        function onXBallTrajectoryUpdated(pointx, pointy) {
+            // console.log("update x line");
+            ball_chart.xLine.append(pointx, pointy);
+        }
+
+        function onYBallTrajectoryUpdated(pointx, pointy) {
+            ball_chart.yLine.append(pointx, pointy);
+        }
+
+        function onXBounceUpdated(x, y) {
+            ball_chart.xScatter.append(x, y);
+        }
+
+        function onYBounceUpdated(x, y) {
+            ball_chart.yScatter.append(x, y);
+        }
+
+        function onAxisXUpdated(max_val) {
+            ball_chart.xAxis.max = max_val;
+            ball_chart.xAxis.min = max_val - 100;
+        }
+
+        function onAxisYUpdated(max_val) {
+            ball_chart.yAxis.max = max_val;
+        }
+    }
     Settings {
         id: settings
         property string videoPath: "No Video Selected"

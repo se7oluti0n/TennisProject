@@ -9,13 +9,15 @@ from PySide6.QtQml import qmlRegisterType, QQmlDebuggingEnabler
 
 import sys
 sys.path.append('./qml_components')
-from PySide6.QtGui import QGuiApplication
+from PySide6.QtWidgets import QApplication as QGuiApplication
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtQuickControls2 import QQuickStyle
 
 import CourtSetupView
 from VideoController import VideoController
-import PlotView
+from ChartController import ChartController
+from VideoProcessor import VideoProcessor
+
 
 if __name__ == "__main__":
     argument_parser = ArgumentParser(description="Scene Graph Painted Item Example",
@@ -26,7 +28,9 @@ if __name__ == "__main__":
     if options.qmljsdebugger:
         QQmlDebuggingEnabler.enableDebugging(True)
 
-    video_controller = VideoController()
+    video_processor = VideoProcessor()
+    video_controller = VideoController(video_processor)
+    chart_controller = ChartController(video_processor)
 
     app = QGuiApplication(sys.argv)
 
@@ -38,6 +42,7 @@ if __name__ == "__main__":
     engine = QQmlApplicationEngine()
 
     engine.rootContext().setContextProperty("video_controller", video_controller)
+    engine.rootContext().setContextProperty("chart_controller", chart_controller)
     engine.addImportPath(sys.path[0])
     engine.loadFromModule("QML", "CourtViewMain")
     if not engine.rootObjects():
