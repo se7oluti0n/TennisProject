@@ -3,6 +3,9 @@ import TrajectoryPlot
 from PySide6.QtCore import QObject, QThread, Signal, Slot
 from PySide6.QtGui import QImage
 import cv2
+import numpy as np
+import os
+import json
 
 
 def cv_to_qimage(cv_img):
@@ -38,10 +41,42 @@ class VideoProcessor(QObject):
         )
         self.ball_trajectory = []
         self.keep_playing = False
+        self.track_ball = True
         self.thread = QThread()
         self.moveToThread(self.thread)
         self.currentFrameChanged.emit(-1)
         self.thread.start()
+        self.video_path = None
+
+    def save(self, path):
+
+        trajectory_path = path + "_ball_trajectory.npy"
+        bounces_path = path + "_bounces.npy"
+
+        ball_trajectory_array = np.asarray(self.ball_trajectory)
+        np.save(trajectory_path , ball_trajectory_array)
+
+        bounces_array = np.asarray(self.bounces)
+        np.save(bounces_path, bounces_array)
+
+
+        project_object = {
+            "video_file": self.video_path,
+            "ball_trajectory": trajectory_path, 
+            "bounces": bounces_path
+        }
+
+        with open(path + ".json", "w") as outfile:
+            json.dump(project_object, outfile)
+
+    def load(self, path):
+        with open(path + ".json", "r") as f:
+            project_object = json.load(f)
+
+        self.read_video(project_object["video_file"])
+        self.ball_trajectory = np.load(project_object["ball_trajectory"], allow_pickle=True)
+        self.bounces = np.load(project_object["bounces"], allow_pickle=True)
+
 
     @Slot()
     def stop(self):
@@ -57,9 +92,9 @@ class VideoProcessor(QObject):
     @Slot(str)
     def read_video(self, path: str):
         self.cap = cv2.VideoCapture(path, cv2.CAP_FFMPEG)
+        self.video_path = path
         self.fps = self.cap.get(cv2.CAP_PROP_FPS)
         self.frames = []
-        self.processNextFrame()
 
     @Slot()
     def trackBallTrajectory(self):
@@ -85,15 +120,10 @@ class VideoProcessor(QObject):
         x_track = [x if x is not None else 0 for x in x_track]
         y_track = [y if y is not None else 0 for y in y_track]
 
-        bounces = self.pickle_vision.bounce_detect(self.ball_trajectory)
-        self.bouncesDetected.emit([(frame_id, x_track[frame_id], y_track[frame_id]) for frame_id in bounces])
+        self.bounces = self.pickle_vision.bounce_detect(self.ball_trajectory)
+        self.bouncesDetected.emit([(frame_id, x_track[frame_id], y_track[frame_id]) for frame_id in self.bounces])
 
         # plot ball track
-        x_plot = TrajectoryPlot.matplotlib_figure_to_qimage(x_track, bounces=bounces, label="x_trajectory")
-        y_plot = TrajectoryPlot.matplotlib_figure_to_qimage(y_track, bounces=bounces, label="y_trajectory")
-
-        self.xPlotReady.emit(x_plot)
-        self.yPlotReady.emit(y_plot)
 
         # emit to visualize on CourtView
         if (
@@ -105,6 +135,14 @@ class VideoProcessor(QObject):
             self.ballDetected.emit(
                 self.current_frame, ball_track[-1][0], ball_track[-1][1]
             )
+
+
+    @Slot(int)
+    def replay_frame(self, frame_id: int):
+        self.current_frame = frame_id - 1
+        self.track_ball = False
+        self.keep_playing = False
+        self.processNextFrame()
 
     @Slot()
     def startPlayLoop(self):
@@ -124,14 +162,16 @@ class VideoProcessor(QObject):
         else:
             if self.keep_playing:
                 self.keep_playing = False
-            return None
+            if self.current_frame == len(self.frames) - 1:
+                return None
         self.current_frame += 1
         self.currentFrameChanged.emit(self.current_frame)
 
         image = cv_to_qimage(self.frames[self.current_frame])
         self.gotImage.emit(self.current_frame, image)
 
-        self.trackBallTrajectory()
+        if self.track_ball:
+            self.trackBallTrajectory()
 
     @Slot()
     def get_prev_frame(self):

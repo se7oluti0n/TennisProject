@@ -4,10 +4,11 @@ import QtQuick
 Item {
     property alias xLine: xBallTrajectory_
     property alias yLine: yBallTrajectory_
-    property alias xScatter: xScatter_
-    property alias yScatter: yScatter_
+    property alias scatter: scatter_
     property alias xAxis: xAxis_
     property alias yAxis: yAxis_
+
+    signal bounceClicked(int xAxis)
 
     ChartView {
         anchors.fill: parent
@@ -26,29 +27,24 @@ Item {
             max: 2000 // Set the maximum y value
         }
 
-        // axes: [xAxis, yAxis]
-
 
         ScatterSeries {
-            id: yScatter_
-            name: "Bounce Y"
-            color: "blue"
+            id: scatter_
+            name: "bounce"
+            color: "red"
             axisX: xAxis_
             axisY: yAxis_
-        }
 
-        ScatterSeries {
-            id: xScatter_
-            name: "Bounce X"
-            color: "blue"
-            axisX: xAxis_
-            axisY: yAxis_
+            onClicked: function (point) {
+              console.log("clicked: ", point);
+              bounceClicked(point.x);
+            }
         }
 
         LineSeries {
             id: xBallTrajectory_
             name: "y traj"
-            color: "red"
+            color: "blue"
             axisX: xAxis_
             axisY: yAxis_
         }

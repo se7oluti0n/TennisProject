@@ -1,6 +1,6 @@
 from numpy._typing import _16Bit
 from numpy.core.fromnumeric import shape
-from tracknet import BallTrackerNet
+from .tracknet import BallTrackerNet
 import torch
 import torchvision
 import cv2

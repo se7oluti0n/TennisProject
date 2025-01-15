@@ -3,7 +3,6 @@
 
 import QtQuick
 import QtCore
-import QtCharts
 import QtQuick.Controls
 import QtQuick.Dialogs
 import QtQuick.Layouts
@@ -43,64 +42,76 @@ Window {
         Layout.fillWidth: true
         Layout.fillHeight: true
 
-        RowLayout {
-            spacing: 10
-            Layout.fillWidth: true
+        CourtSetupView {
+            id: courtView
+            implicitWidth: window.width
+            implicitHeight: window.height - 400
 
-            CourtSetupView {
-                id: courtView
-                implicitWidth: (window.width - 10) * 0.7
-                implicitHeight: window.height - 100
-
-                MouseArea {
-                    anchors.fill: parent
-                    acceptedButtons: Qt.LeftButton | Qt.RightButton
-                    onClicked: function (mouse) {
-                        if (mouse.button === Qt.RightButton) {
-                            // console.log("Right-click detected at", mouse.x, mouse.y);
-                            courtView.handleRightClicked(mouse.x, mouse.y);
-                        }
-                    }
-
-                    onPressed: function (mouse) {
-                        if (mouse.button === Qt.LeftButton) {
-                            courtView.handleMousePressed(mouse.x, mouse.y);
-                        }
-                    }
-
-                    onReleased: function (mouse) {
-                        courtView.handleMouseReleased(mouse.x, mouse.y);
-                    }
-
-                    onPositionChanged: function (mouse) {
-                        courtView.handleMouseMoved(mouse.x, mouse.y);
+            MouseArea {
+                anchors.fill: parent
+                acceptedButtons: Qt.LeftButton | Qt.RightButton
+                onClicked: function (mouse) {
+                    if (mouse.button === Qt.RightButton) {
+                        // console.log("Right-click detected at", mouse.x, mouse.y);
+                        courtView.handleRightClicked(mouse.x, mouse.y);
                     }
                 }
+
+                onPressed: function (mouse) {
+                    if (mouse.button === Qt.LeftButton) {
+                        courtView.handleMousePressed(mouse.x, mouse.y);
+                    }
+                }
+
+                onReleased: function (mouse) {
+                    courtView.handleMouseReleased(mouse.x, mouse.y);
+                }
+
+                onPositionChanged: function (mouse) {
+                    courtView.handleMouseMoved(mouse.x, mouse.y);
+                }
+            }
+        }
+
+        BallChart {
+            id: ball_chart
+            implicitWidth: window.width
+            implicitHeight: 300
+
+            onBounceClicked: function (frame_id) {
+                console.log("replay at frame " + frame_id);
+                chart_controller.handleReplayAtFrame(frame_id)
             }
 
-            BallChart {
-                id: ball_chart
-                implicitWidth: (window.width - 10) * 0.3
-                implicitHeight: window.height - 100
+            MouseArea {
+                anchors {
+                    top: parent.top
+                    left: parent.left
+                    right: parent.right
+                    bottom: parent.verticalCenter
+                }
+                acceptedButtons: Qt.LeftButton | Qt.RightButton
+                onClicked: function (mouse) {
+                    if (mouse.button === Qt.RightButton) {
+                        // console.log("Right-click detected at", mouse.x, mouse.y);
+                        console.log("Reset zoom");
+                    }
+                }
+
+                onPressed: function (mouse) {
+                    if (mouse.button === Qt.LeftButton) {
+                        chart_controller.handleLeftMousePressed(mouse.x);
+                    }
+                }
+
+                onReleased: function (mouse) {
+                    chart_controller.handleLeftMouseReleased();
+                }
+
+                onPositionChanged: function (mouse) {
+                    chart_controller.handleMouseMove(mouse.x);
+                }
             }
-            // ColumnLayout {
-            //     Layout.preferredWidth: (window.width - 10) * 0.3
-            //     Layout.preferredHeight: window.height - 100
-            //
-            //     spacing: 10
-            //
-            //     PlotView {
-            //         id: xPlotView
-            //         implicitWidth: parent.width
-            //         implicitHeight: (parent.height - 10) / 2
-            //     }
-            //     PlotView {
-            //         id: yPlotView
-            //         implicitWidth: parent.width
-            //         implicitHeight: (parent.height - 10) / 2
-            //     }
-            //
-            // }
         }
 
         RowLayout {
@@ -254,12 +265,8 @@ Window {
             ball_chart.yLine.append(pointx, pointy);
         }
 
-        function onXBounceUpdated(x, y) {
-            ball_chart.xScatter.append(x, y);
-        }
-
-        function onYBounceUpdated(x, y) {
-            ball_chart.yScatter.append(x, y);
+        function onBounceUpdated(x, y) {
+            ball_chart.scatter.append(x, y);
         }
 
         function onAxisXUpdated(max_val) {

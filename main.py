@@ -1,10 +1,10 @@
 import cv2
-from court_detection_net import CourtDetectorNet
+from ai.court_detection_net import CourtDetectorNet
 import numpy as np
-from court_reference import CourtReference
-from bounce_detector import BounceDetector
-from person_detector import PersonDetector
-from ball_detector import BallDetector
+from ai.court_reference import CourtReference
+from ai.bounce_detector import BounceDetector
+from ai.ball_detector import BallDetector
+from ai.person_detector import PersonDetector
 from utils import scene_detect
 import argparse
 import torch
