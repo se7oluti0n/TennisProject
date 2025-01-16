@@ -32,11 +32,12 @@ class PickleSwingVision:
 
     def track_ball2(self, frame):
         ball_track = self.ball_tracker.detect_frame(frame)
-        self._ball_detections.append(ball_track)
-
-        if len(self._ball_detections) > 5:
-            self._ball_detections = self.ball_tracker.interpolate_ball_positions(self._ball_detections)
-        return self._ball_detections[-1]
+        return ball_track
+        # self._ball_detections.append(ball_track)
+        #
+        # if len(self._ball_detections) > 5:
+        #     self._ball_detections = self.ball_tracker.interpolate_ball_positions(self._ball_detections)
+        # return self._ball_detections[-1]
 
     #brief: function to detect bounces
     #params: ball_track: list of (x,y) ball coordinates from 
