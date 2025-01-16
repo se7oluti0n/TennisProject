@@ -5,6 +5,7 @@ Item {
     property alias xLine: xBallTrajectory_
     property alias yLine: yBallTrajectory_
     property alias scatter: scatter_
+    property alias cursor: cursor_
     property alias xAxis: xAxis_
     property alias yAxis: yAxis_
 
@@ -27,11 +28,25 @@ Item {
             max: 2000 // Set the maximum y value
         }
 
+        ScatterSeries {
+            id: cursor_
+            name: "current frame"
+            color: "red"
+            axisX: xAxis_
+            axisY: yAxis_
+            markerShape: ScatterSeries.MarkerShapeRectangle
+
+            XYPoint {
+              x: 0
+              y: 0
+            }
+
+        }
 
         ScatterSeries {
             id: scatter_
             name: "bounce"
-            color: "red"
+            color: "cyan"
             axisX: xAxis_
             axisY: yAxis_
 
