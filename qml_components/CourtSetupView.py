@@ -179,7 +179,10 @@ class CourtSetupView(QQuickPaintedItem):
     @Slot(int, int, int)
     def handleBallDetected(self, frame_id, x, y):
         # print("handleBallDetected", frame_id, x, y)
-        self.ball_xy = (int(self.scale_x * x), int(self.scale_y * y)) # (x, y)
+        if x == 0 and y == 0: 
+            self.ball_xy = None
+        else:
+            self.ball_xy = (int(self.scale_x * x), int(self.scale_y * y)) # (x, y)
         self.update()
 
     @Slot(list)
@@ -232,7 +235,7 @@ class CourtSetupView(QQuickPaintedItem):
     def paint_ball_detection(self, painter: QPainter):
         if self.ball_xy: 
             # ball_xy = self.ball_xy[self._current_frame_id]
-            # print("ball_xy", self.ball_xy)
+            # print("draw ball_xy {} at {}".format(self.ball_xy, self._current_frame_id))
             pen = QPen(QColor(255, 0, 0), 2)  # Blue border with width 4
             painter.setPen(pen)
             painter.drawEllipse(self.ball_xy[0] - 5, self.ball_xy[1] - 5, 10, 10)
@@ -240,11 +243,11 @@ class CourtSetupView(QQuickPaintedItem):
     def paint_mini_map(self, painter: QPainter):
 
         # TODO: 1. paint court line scaled 
-        draw_height = self.height() * 0.3
+        draw_height = self.height() * 0.6
         ref_height = self._court_reference["left_court_line"][1][1] - self._court_reference["left_court_line"][0][1] 
         draw_scale = draw_height / ref_height
 
-        pen = QPen(QColor(0, 255, 0), 2)  # Blue border with width 4
+        pen = QPen(QColor(0, 255, 0), 3)  # Blue border with width 4
         painter.setPen(pen)
         draw_ref_cout = {}
         for key in self._court_reference:
@@ -260,5 +263,5 @@ class CourtSetupView(QQuickPaintedItem):
             pen = QPen(QColor(255, 0, 0), 1)  # Blue border with width 4
             painter.setPen(pen)
             painter.setBrush(QColor(255, 0, 0))
-            painter.drawEllipse(bounce_draw[0][0] - 1, bounce_draw[0][1] - 1, 2, 2)
+            painter.drawEllipse(bounce_draw[0][0] - 3, bounce_draw[0][1] - 3, 6, 6)
 
