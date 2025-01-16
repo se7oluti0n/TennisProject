@@ -4,8 +4,6 @@ from VideoProcessor import VideoProcessor
 
 class VideoController(QObject):
     gotImage = Signal(int, QImage)
-    xPlotReady = Signal(QImage)
-    yPlotReady = Signal(QImage)
     prevAvailable = Signal(bool)
     nextAvailable = Signal(bool)
     playingStatusChanged = Signal(bool)
@@ -19,6 +17,8 @@ class VideoController(QObject):
     requestPause = Signal()
     requestGetNext = Signal()
     requestGetPrev = Signal()
+    requestOpenProject = Signal(str)
+    requestSaveProject = Signal(str)
 
     def __init__(self, videoProcessor: VideoProcessor):
         super().__init__()
@@ -28,6 +28,8 @@ class VideoController(QObject):
         self.requestPause.connect(self.videoProcessor.pausePlayLoop)
         self.requestGetNext.connect(self.videoProcessor.processNextFrame)
         self.requestGetPrev.connect(self.videoProcessor.get_prev_frame)
+        self.requestSaveProject.connect(self.videoProcessor.save)
+        self.requestOpenProject.connect(self.videoProcessor.load)
         self.destroyed.connect(self.stop)
 
         self.videoProcessor.gotImage.connect(self.handleImageReady)
@@ -35,7 +37,16 @@ class VideoController(QObject):
         self.videoProcessor.yPlotReady.connect(self.handleYplot)
         self.videoProcessor.currentFrameChanged.connect(self.handleCurrentFrameChanged)
         self.videoProcessor.ballDetected.connect(self.handleBallDetected)
+        self.videoProcessor.ballVisualize.connect(self.handleBallDetected)
         self.videoProcessor.bouncesDetected.connect(self.handleBouncesDetected)
+    
+    @Slot(str)
+    def handleOpenProject(self, project_path: str):
+        self.requestOpenProject.emit(project_path)
+
+    @Slot(str)
+    def hanleSaveProject(self, project_path: str):
+        self.requestSaveProject.emit(project_path)
 
     @Slot()
     def stop(self):
@@ -47,12 +58,12 @@ class VideoController(QObject):
         self.requestReadVideo.emit(path)
 
     @Slot()
-    def play(self):
+    def analyze_video(self):
         self.requestPlay.emit()
         self.playingStatusChanged.emit(True)
 
     @Slot()
-    def pause(self):
+    def pause_analyze(self):
         print("======================== on button paused =========")
         self.playingStatusChanged.emit(False)
         self.videoProcessor.pausePlayLoop()
