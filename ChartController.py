@@ -5,20 +5,30 @@ class ChartController(QObject):
     xBallTrajectoryUpdated = Signal(float, float)
     yBallTrajectoryUpdated = Signal(float, float)
     bounceUpdated = Signal(float, float)
-    axisXUpdated = Signal(float)
+    axisXUpdated = Signal(float, float)
     axisYUpdated = Signal(float)
+    ballTrajectoryLoaded = Signal(list)
+    bouncesLoaded = Signal(list)
+    currentFrameChanged = Signal(int)
 
     def __init__(self, VideoProcessor: VideoProcessor):
         super().__init__()
         self.videoProcessor = VideoProcessor
         self.videoProcessor.ballDetected.connect(self.handleBallTrajectoryUpdated)
         self.videoProcessor.bouncesDetected.connect(self.handleBounceDetected)
+        self.videoProcessor.ballTrajectoryLoaded.connect(self.handleBallTrajectoryLoaded)
+        self.videoProcessor.bouncesLoaded.connect(self.handleBouncesLoaded)
+        self.videoProcessor.currentFrameChanged.connect(self.handleCurrentFrameChanged)
         self.maxX = 100
         self.maxY = 100
         self.lastBounce = -1
         self.moveMode = False
         self.lastMousePos =  -1
-        self.scale = 100
+        self.xScale = 100
+
+    @Slot(int)
+    def handleCurrentFrameChanged(self, frame_id):
+        self.currentFrameChanged.emit(frame_id)
 
     @Slot(int)
     def handleReplayAtFrame(self, frame_id: int):
@@ -36,7 +46,7 @@ class ChartController(QObject):
     @Slot(float)
     def handleMouseMove(self, x):
         if self.moveMode:
-            self.axisXUpdated.emit(self.maxX + x - self.lastMousePos)
+            self.axisXUpdated.emit(self.maxX + (self.lastMousePos - x) * 0.5, self.xScale)
 
     @Slot()
     def handleRightMouseClicked(self):
@@ -52,7 +62,7 @@ class ChartController(QObject):
             self.axisYUpdated.emit(self.maxY)
         if frame_id > self.maxX:
             self.maxX = self.maxX + 50
-            self.axisXUpdated.emit(self.maxX)
+            self.axisXUpdated.emit(self.maxX, self.xScale)
 
         self.xBallTrajectoryUpdated.emit(frame_id, x)
         self.yBallTrajectoryUpdated.emit(frame_id, y)
@@ -66,3 +76,12 @@ class ChartController(QObject):
                 print("Bounce detected: ", frame_id)
                 self.bounceUpdated.emit(frame_id, 0)
                 self.lastBounce = frame_id
+
+    @Slot(list)
+    def handleBallTrajectoryLoaded(self, trajectory):
+        self.ballTrajectoryLoaded.emit(trajectory)
+
+
+    @Slot(list)
+    def handleBouncesLoaded(self, bounces):
+        self.bouncesLoaded.emit(bounces)

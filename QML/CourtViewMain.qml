@@ -25,6 +25,7 @@ Window {
     Material.foreground: "#FFFFFF"    // Foreground color (e.g., text)
     Material.background: "#121212"    // Background color
 
+
     onWidthChanged: {
         settings.windowWidth = window.width;
         courtView.handleResize();
@@ -41,11 +42,12 @@ Window {
         //Layout.preferredHeight: parent.height
         Layout.fillWidth: true
         Layout.fillHeight: true
+        Layout.leftMargin: 10
 
         CourtSetupView {
             id: courtView
             implicitWidth: window.width
-            implicitHeight: window.height - 400
+            implicitHeight: window.height - 420
 
             MouseArea {
                 anchors.fill: parent
@@ -130,7 +132,9 @@ Window {
             Button {
                 text: "Browse"
                 onClicked: {
-                    fileDialog.open();
+                  fileDialog.fileMode = FileDialog.OpenFile;
+                  fileDialog.purpose = "Open Video";
+                  fileDialog.open();
                 }
             }
             Button {
@@ -143,6 +147,24 @@ Window {
                 text: "Load Homography"
                 onClicked: {
                     courtView.loadHomography();
+                }
+            }
+
+            Button {
+                text: "Save Projects"
+                onClicked: {
+                  fileDialog.fileMode = FileDialog.SaveFile;
+                  fileDialog.purpose = "Save Project";
+                  fileDialog.open();
+                }
+            }
+
+            Button {
+                text: "Load Projects"
+                onClicked: {
+                  fileDialog.fileMode = FileDialog.OpenFile;
+                  fileDialog.purpose = "Open Project";
+                  fileDialog.open();
                 }
             }
         }
@@ -190,20 +212,13 @@ Window {
             }
 
             Button {
-                text: "Process frame"
-                onClicked: {
-                    pickle_vision.process_frame();
-                }
-            }
-
-            Button {
                 id: playBtn
                 text: "Play"
                 onClicked: {
                     if (playBtn.text === "Pause") {
-                        video_controller.pause();
+                        video_controller.pause_analyze();
                     } else {
-                        video_controller.play();
+                        video_controller.analyze_video();
                     }
                 }
             }
@@ -212,8 +227,21 @@ Window {
 
     FileDialog {
         id: fileDialog
+        property string purpose : "Open Video";
         currentFolder: StandardPaths.standardLocations(StandardPaths.PicturesLocation)[0]
-        onAccepted: video_path.text = selectedFile
+        onAccepted: {
+          if (purpose === "Open Video") {
+            video_path.text = selectedFile;
+          }
+          else if (purpose === "Open Project") {
+            video_controller.handleOpenProject(selectedFile);
+            window.title = "Pickleball Tracker - " + selectedFile;
+          }
+          else if (purpose === "Save Project") {
+            video_controller.hanleSaveProject(selectedFile);
+          }
+          
+        } 
     }
 
     Connections {
@@ -240,16 +268,8 @@ Window {
             courtView.handleBounceDetected(bounces);
         }
 
-        function onXPlotReady(plot_img) {
-        // xPlotView.setPlot(plot_img);
-        }
-
-        function onYPlotReady(plot_img) {
-        // yPlotView.setPlot(plot_img);
-        }
-
         function onPlayingStatusChanged(isPlaying) {
-            playBtn.text = isPlaying ? "Pause" : "Play";
+            playBtn.text = isPlaying ? "Pause" : "Analyze Video";
         }
     }
 
@@ -269,13 +289,32 @@ Window {
             ball_chart.scatter.append(x, y);
         }
 
-        function onAxisXUpdated(max_val) {
+        function onAxisXUpdated(max_val, scale) {
             ball_chart.xAxis.max = max_val;
-            ball_chart.xAxis.min = max_val - 100;
+            ball_chart.xAxis.min = max_val - scale;
         }
 
         function onAxisYUpdated(max_val) {
             ball_chart.yAxis.max = max_val;
+        }
+
+        function onBallTrajectoryLoaded(trajectory) {
+          for (var i = 0; i < trajectory.length; i++) {
+            ball_chart.xLine.append(i, trajectory[i][0]);
+            ball_chart.yLine.append(i, trajectory[i][1]);
+          }
+        }
+
+        function onBouncesLoaded(bounces) {
+          for (var i = 0; i < bounces.length; i++) {
+            ball_chart.scatter.append(bounces[i], 0); 
+          }
+          
+        }
+
+        function onCurrentFrameChanged(frame_id) {
+          ball_chart.cursor.remove(0);
+          ball_chart.cursor.append(frame_id, 0);
         }
     }
     Settings {
