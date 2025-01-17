@@ -245,13 +245,17 @@ class CourtSetupView(QQuickPaintedItem):
         # TODO: 1. paint court line scaled 
         draw_height = self.height() * 0.6
         ref_height = self._court_reference["left_court_line"][1][1] - self._court_reference["left_court_line"][0][1] 
+        ref_width = self._court_reference["baseline_top"][1][0] - self._court_reference["baseline_top"][0][0]
         draw_scale = draw_height / ref_height
+        draw_width = int(draw_scale * ref_width)
+        offset_x = self.width() - 10 - draw_width 
+        offset = np.asarray([offset_x, 10], dtype=np.float32)
 
         pen = QPen(QColor(0, 255, 0), 3)  # Blue border with width 4
         painter.setPen(pen)
         draw_ref_cout = {}
         for key in self._court_reference:
-            draw_ref_cout[key] = self._court_reference[key] * draw_scale + 10
+            draw_ref_cout[key] = self._court_reference[key] * draw_scale + offset
             painter.drawLine(*draw_ref_cout[key][0], *draw_ref_cout[key][1])
 
 
